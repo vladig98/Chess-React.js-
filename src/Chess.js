@@ -1,4 +1,4 @@
-import { Board } from "./Board.js";
+import Board from "./Board.js";
 
 export default function Chess() {
     return (<>

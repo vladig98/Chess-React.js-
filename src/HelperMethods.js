@@ -13,6 +13,24 @@ export function IsDigit(value) {
     return value.charCodeAt(0) >= 48 && value.charCodeAt(0) <= 57
 }
 
+export function ParseFEN(fen) {
+    const fenParts = fen.split(' ');
+
+    if (fenParts.length != 6) {
+        console.log('Invalid FEN')
+        return;
+    }
+
+    const fenBoard = fenParts[0];
+    const fenTurn = fenParts[1];
+    const fenCastling = fenParts[2];
+    const fenEnPassant = fenParts[3];
+    const fenHalfMoves = Number(fenParts[4])
+    const fenFullMoves = Number(fenParts[5])
+
+    return { fenBoard, fenTurn, fenCastling, fenEnPassant, fenHalfMoves, fenFullMoves }
+}
+
 export function ConvertFENtoPiece(letter) {
     switch (letter.toLowerCase()) {
         case "p":
@@ -65,30 +83,42 @@ export function UpdatePosition(square, targetSquare, position) {
 
     for (let i = 0; i < position.length; i++) {
         if (square.props.x == targetSquare.props.x && square.props.x == i) {
-            let row = ConvertFenToString(position[Number(square.props.x)])
-            row = SidewaysCapture(row, Number(square.props.y), Number(targetSquare.props.y), square.props.piece)
+            let row = position[i]
             if (square.props.piece.split("-")[1] == "king") {
                 if (Math.abs(square.props.y - targetSquare.props.y) == 2) {
-                    if (row.toLowerCase().indexOf("r k") == 0) {
-                        row = square.props.piece.split("-")[0] == "white" ? "  KR " + row.substring(5, row.length) : "  kr " + row.substring(5, row.length)
+                    //if (row.toLowerCase().indexOf("r k") == 0) {
+                    if (row[0].toLowerCase() == 'r' && row[1].toLowerCase() == ' ' && row[2].toLowerCase() == ' ' && row[3].toLowerCase() == ' ' && row[4].toLowerCase() == 'k') {
+                        // row = square.props.piece.split("-")[0] == "white" ? "  KR " + row.substring(5, row.length) : "  kr " + row.substring(5, row.length)
+                        let index2 = square.props.piece.split("-")[0] == "white" ? 'K' : 'k'
+                        let index3 = square.props.piece.split("-")[0] == "white" ? 'R' : 'r'
+
+                        row[0] = ' '
+                        row[1] = ' '
+                        row[2] = index2
+                        row[3] = index3
+                        row[4] = ' '
                     }
 
-                    if (row.toLowerCase().indexOf("kr") == 6) {
-                        row = square.props.piece.split("-")[0] == "white" ? row.substring(0, 4) + " RK " : row.substring(0, 4) + " rk "
+                    if (row[4].toLowerCase() == 'k' && row[5].toLowerCase() == ' ' && row[6].toLowerCase() == ' ' && row[7].toLowerCase() == 'r') {
+                        let index5 = square.props.piece.split("-")[0] == "white" ? 'R' : 'r'
+                        let index6 = square.props.piece.split("-")[0] == "white" ? 'K' : 'k'
+
+                        row[4] = ' '
+                        row[5] = index5
+                        row[6] = index6
+                        row[7] = ' '
                     }
                 }
             }
-            row = ConvertStringToFEN(row)
+            row = SidewaysCapture(row, Number(square.props.y), Number(targetSquare.props.y), square.props.piece)
             pos.push(row)
         } else if (square.props.x == i) {
-            let row = ConvertFenToString(position[i])
-            row = replaceAt(row, ' ', Number(square.props.y))
-            row = ConvertStringToFEN(row)
+            let row = position[i]
+            row[square.props.y] = ' '
             pos.push(row)
         } else if (targetSquare.props.x == i) {
-            let row = ConvertFenToString(position[i])
-            row = replaceAt(row, ConvertPieceToFENPiece(square.props.piece), Number(targetSquare.props.y))
-            row = ConvertStringToFEN(row)
+            let row = position[i]
+            row[targetSquare.props.y] = ConvertPieceToFENPiece(square.props.piece)
             pos.push(row)
         } else {
             pos.push(position[i])
@@ -107,11 +137,11 @@ function SidewaysCapture(row, y, targetY, value) {
         } else if (i == targetY) {
             result.push(ConvertPieceToFENPiece(value))
         } else {
-            result.push(row.charAt(i))
+            result.push(row[i])
         }
     }
 
-    return result.join('')
+    return result
 }
 
 function ConvertStringToFEN(value) {

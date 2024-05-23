@@ -7,6 +7,14 @@
   width: min-content;
 }
 
+.coordinates {
+  font-size: 30px;
+  text-align: center;
+  color: white;
+  background-color: black;
+  padding: 0.5rem;
+}
+
 .chessSquare {
   background-color: rgb(238, 238, 210);
   aspect-ratio: 1;

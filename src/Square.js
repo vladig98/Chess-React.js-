@@ -1,38 +1,54 @@
-import { Component } from "react"
+import React, { useState, useEffect } from 'react';
+import { CurrentSquareSelection, PossibleMoves } from "./globalVariables.js"
 
-export class Square extends Component {
-    constructor(props) {
-        super(props)
-        this.updatePossibleMoves = props.updatePossibleMoves
-        this.setSelectedSquareX = props.setSelectedSquareX
-        this.setSelectedSquareY = props.setSelectedSquareY
+function Square({
+    getPossibleMoves,
+    x,
+    y,
+    piece,
+    color,
+    movePiece,
+    isPossibleMove,
+    resetPossibleMoves
+}) {
+
+    function reset(newX = -1, newY = -1) {
+        CurrentSquareSelection.x = newX
+        CurrentSquareSelection.y = newY
+        resetPossibleMoves()
     }
 
-    onClick = () => {
-        if (this.props.possibleMoves.some(m => m.x == this.props.x && m.y == this.props.y)) {
-            this.props.movePiece(this.props.x, this.props.y)
+    function handleClick() {
+        if (PossibleMoves.find(m => m.piece.props.x == CurrentSquareSelection.x && m.piece.props.y == CurrentSquareSelection.y)?.moves.some(m => m.props.x == x && m.props.y == y)) {
+            movePiece(x, y)
+            reset()
         } else {
-            if (this.props.selectedSquareX == this.props.x && this.props.selectedSquareY == this.props.y) {
-                this.setSelectedSquareX("")
-                this.setSelectedSquareY("")
-                this.updatePossibleMoves([])
+            if (CurrentSquareSelection.x == x && CurrentSquareSelection.y == y) {
+                PossibleMoves.splice(0, PossibleMoves.length);
+                reset()
             } else {
-                this.setSelectedSquareX(this.props.x)
-                this.setSelectedSquareY(this.props.y)
-                this.props.getPossibleMoves(this)
+                reset(x, y)
+                getPossibleMoves()
             }
         }
     }
 
-    render() {
-        let styles = ['chessSquare', 'piece'];
-        styles.push(this.props.color);
-        styles.push(this.props.piece);
+    let styles = ['chessSquare', 'piece'];
+    styles.push(color);
+    styles.push(piece);
 
-        if (this.props.possibleMoves.some(move => move.x === this.props.x && move.y === this.props.y)) {
-            styles.push("possibleMove");
-        }
-
-        return <div onClick={this.onClick} className={styles.filter(Boolean).join(" ")}></div>
+    //if (PossibleMoves.some(move => move.moves.some(m => m.props.x === x && m.props.y === y))) {
+    if (isPossibleMove) {
+        styles.push("possibleMove");
     }
+
+    return (
+        <>
+            <div onClick={handleClick} className={styles.filter(Boolean).join(" ")}>
+                {/* <span className='coordinates'>{x}-{y}</span> */}
+            </div>
+        </>
+    )
 }
+
+export default Square
