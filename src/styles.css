@@ -1,5 +1,9 @@
 :root {
   --possibleMoveSize: 3rem;
+  --lightSquareColor: rgb(238, 238, 210);
+  --darkSquareColor: rgb(118, 150, 86);
+  --gridBorderColor: black;
+  --pieceSize: 6.5rem;
 }
 
 .chessContainer {
@@ -7,18 +11,14 @@
   width: min-content;
 }
 
-.coordinates {
-  font-size: 30px;
-  text-align: center;
-  color: white;
-  background-color: black;
-  padding: 0.5rem;
+.chessSquare {
+  aspect-ratio: 1;
+  width: var(--pieceSize);
+  background-color: var(--lightSquareColor);
 }
 
-.chessSquare {
-  background-color: rgb(238, 238, 210);
-  aspect-ratio: 1;
-  width: 6.5rem;
+.chessSquare.dark {
+  background-color: var(--darkSquareColor);
 }
 
 .piece {
@@ -26,14 +26,26 @@
   background-size: contain;
 }
 
-.dark {
-  background-color: rgb(118, 150, 86);
+.chessGrid {
+  border: 3px solid var(--gridBorderColor);
+  display: grid;
+  grid-template-columns: repeat(8, auto);
 }
 
-.chessGrid {
-  border: 3px solid black;
-  display: grid;
-  grid-template-columns: auto auto auto auto auto auto auto auto;
+.white-pawn,
+.white-rook,
+.white-knight,
+.white-bishop,
+.white-king,
+.white-queen,
+.black-pawn,
+.black-rook,
+.black-knight,
+.black-bishop,
+.black-king,
+.black-queen {
+  background-size: contain;
+  background-repeat: no-repeat;
 }
 
 .white-pawn {
@@ -45,7 +57,7 @@
 }
 
 .white-knight {
-  background-image: url(pieces/white-kinght.png);
+  background-image: url(pieces/white-knight.png);
 }
 
 .white-bishop {
@@ -69,7 +81,7 @@
 }
 
 .black-knight {
-  background-image: url(pieces/black-night.png);
+  background-image: url(pieces/black-knight.png);
 }
 
 .black-bishop {
@@ -84,20 +96,20 @@
   background-image: url(pieces/black-queen.png);
 }
 
+.possibleMove {
+  position: relative;
+}
+
 .possibleMove::before {
   content: '';
   display: inline-block;
   background-color: black;
   width: var(--possibleMoveSize);
   height: var(--possibleMoveSize);
-  border-radius: 50px;
+  border-radius: 50%;
   position: absolute;
   --size: calc(var(--possibleMoveSize) / 2);
   top: calc(50% - var(--size));
   left: calc(50% - var(--size));
   opacity: 0.3;
-}
-
-.possibleMove {
-  position: relative;
 }
