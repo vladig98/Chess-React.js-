@@ -21,7 +21,7 @@ export function getAllPossibleMoves(square, boardSquares) {
     };
 
     const moveHandler = moveHandlers[pieceType];
-    return moveHandler ? moveHandler(square, boardSquares, pieceColor) : [];
+    return moveHandler ? [moveHandler(square, boardSquares, pieceColor)] : [];
 }
 
 /**
@@ -60,7 +60,7 @@ function getMovesInDirection(square, boardSquares, [xIncrement, yIncrement]) {
     const moves = [];
     let x = square.props.x + xIncrement;
     let y = square.props.y + yIncrement;
-    while (x >= 0 && x < GlobalVariables.DIM && y >= 0 && y < GlobalVariables.DIM) {
+    while (HelperMethods.areCoordinatesInBounds(x, y)) {
         const targetSquare = HelperMethods.getATargetSquareByLocation(x, y, boardSquares);
         if (HelperMethods.isSquareAvailable(targetSquare)) {
             moves.push(targetSquare);
@@ -138,7 +138,8 @@ function getPawnMoves(square, boardSquares) {
             [square.props.x + forwardOne, square.props.y - 1]
         ];
 
-        if (enPassantSquare && validEnPassantOffsets.some(([x, y]) => HelperMethods.compareIfTwoSquaresAreTheSame(enPassantSquare, getTargetSquare(x, y)))) {
+        if (enPassantSquare && validEnPassantOffsets.some(([x, y]) => HelperMethods.areCoordinatesInBounds(x, y) &&
+            HelperMethods.compareIfTwoSquaresAreTheSame(enPassantSquare, getTargetSquare(x, y)))) {
             moves.push(enPassantSquare);
         }
     };
@@ -273,6 +274,7 @@ function getCastlingMoves(square, color, boardSquares) {
     return moves;
 }
 
+//TODO: FIX IT. MAKE IT WORK
 /**
  * Filters out moves that do not deal with a check.
  * @param {Array} possibleMoves - The array of possible moves.
@@ -309,6 +311,7 @@ export function filterMovesIfInCheck(possibleMoves, boardSquares) {
     });
 }
 
+//TODO: FIX IT. MAKE IT WORK
 /**
  * Filters out moves that allow illegal castling (castling through check).
  * @param {Array} possibleMoves - The array of possible moves.

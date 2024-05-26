@@ -3,6 +3,79 @@ import Square from "./Square.js"
 import * as GlobalVariables from './globalVariables';
 
 /**
+ * Gets the piece from a square.
+ * @param {object} square - The square to get the piece from.
+ * @returns {string} - The piece.
+ */
+export function getPiece(square) {
+    return square.props.piece.split(GlobalVariables.PIECE_DELIMITER)[GlobalVariables.PIECE_PIECE_INDEX];
+}
+
+/**
+ * Checks if a square has a specific piece.
+ * @param {object} square - The square to check.
+ * @param {string} piece - The piece to check for.
+ * @returns {boolean} - True if the square has the piece, false otherwise.
+ */
+export function doesTheSquareHasThePiece(square, piece) {
+    return getPiece(square) === piece;
+}
+
+/**
+ * Checks if the piece on the square is a King.
+ * @param {object} square - The square to check.
+ * @returns {boolean} - True if the piece is a King, false otherwise.
+ */
+export function isKing(square) {
+    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.KING);
+}
+
+/**
+ * Checks if the piece on the square is a Bishop.
+ * @param {object} square - The square to check.
+ * @returns {boolean} - True if the piece is a Bishop, false otherwise.
+ */
+export function isBishop(square) {
+    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.BISHOP);
+}
+
+/**
+ * Checks if the piece on the square is a Queen.
+ * @param {object} square - The square to check.
+ * @returns {boolean} - True if the piece is a Queen, false otherwise.
+ */
+export function isQueen(square) {
+    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.QUEEN);
+}
+
+/**
+ * Checks if the piece on the square is a Rook.
+ * @param {object} square - The square to check.
+ * @returns {boolean} - True if the piece is a Rook, false otherwise.
+ */
+export function isRook(square) {
+    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.ROOK);
+}
+
+/**
+ * Checks if the piece on the square is a Pawn.
+ * @param {object} square - The square to check.
+ * @returns {boolean} - True if the piece is a Pawn, false otherwise.
+ */
+export function isPawn(square) {
+    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.PAWN);
+}
+
+/**
+ * Checks if the piece on the square is a Knight.
+ * @param {object} square - The square to check.
+ * @returns {boolean} - True if the piece is a Knight, false otherwise.
+ */
+export function isKnight(square) {
+    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.KNIGHT);
+}
+
+/**
  * Checks if a character is Uppercase using the ASCII table.
  * @param {string} value - The character to check.
  * @returns {boolean} - True if the character is uppercase, false otherwise.
@@ -149,25 +222,6 @@ export function isSquareOnRow(square, rowNumber) {
  */
 export function isSquareOnColumn(square, columnNumber) {
     return square.props.y === columnNumber;
-}
-
-/**
- * Gets the piece from a square.
- * @param {object} square - The square to get the piece from.
- * @returns {string} - The piece.
- */
-export function getPiece(square) {
-    return square.props.piece.split(GlobalVariables.PIECE_DELIMITER)[GlobalVariables.PIECE_PIECE_INDEX];
-}
-
-/**
- * Checks if a square has a specific piece.
- * @param {object} square - The square to check.
- * @param {string} piece - The piece to check for.
- * @returns {boolean} - True if the square has the piece, false otherwise.
- */
-export function doesTheSquareHasThePiece(square, piece) {
-    return getPiece(square) === piece;
 }
 
 /**
@@ -478,6 +532,22 @@ export function updateEnPassant(enPassant) {
 }
 
 /**
+ * Checks if the given coordinates are within the bounds of the chessboard.
+ *
+ * This function ensures that the coordinates (x, y) fall within the valid range
+ * of the chessboard dimensions. It returns true if both x and y are greater than
+ * or equal to 0 and less than the board dimension (DIM). This is useful for 
+ * validating moves and ensuring that they do not exceed the boundaries of the board.
+ *
+ * @param {number} x - The x-coordinate to check.
+ * @param {number} y - The y-coordinate to check.
+ * @returns {boolean} - True if the coordinates are within the bounds of the board, false otherwise.
+ */
+export function areCoordinatesInBounds(x, y) {
+    return x >= 0 && y >= 0 && x < GlobalVariables.DIM && y < GlobalVariables.DIM
+}
+
+/**
  * Parses the FEN string to update the board state.
  * @param {string} fen - The FEN string representing the board state.
  * @param {Array} isPossibleMove - Array indicating possible moves.
@@ -508,9 +578,9 @@ export function fenParser(fen, isPossibleMove, getPossibleMoves, movePiece, rese
     GlobalVariables.updateHalfMoves(fenHalfMoves);
     GlobalVariables.updateFullMoves(fenFullMoves);
 
-    if (updateBoardPosition) {
-        GlobalVariables.BoardPosition.splice(0, GlobalVariables.BoardPosition.length, ...boardArray);
-    }
+    // if (updateBoardPosition) {
+    GlobalVariables.BoardPosition.splice(0, GlobalVariables.BoardPosition.length, ...boardArray);
+    //}
 
     updateEnPassant(fenEnPassant);
 
@@ -737,60 +807,6 @@ export function isBlackInCheck(kingSquare, pseudo, currentSquare = null, boardSq
 }
 
 /**
- * Checks if the piece on the square is a King.
- * @param {object} square - The square to check.
- * @returns {boolean} - True if the piece is a King, false otherwise.
- */
-export function isKing(square) {
-    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.KING);
-}
-
-/**
- * Checks if the piece on the square is a Bishop.
- * @param {object} square - The square to check.
- * @returns {boolean} - True if the piece is a Bishop, false otherwise.
- */
-export function isBishop(square) {
-    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.BISHOP);
-}
-
-/**
- * Checks if the piece on the square is a Queen.
- * @param {object} square - The square to check.
- * @returns {boolean} - True if the piece is a Queen, false otherwise.
- */
-export function isQueen(square) {
-    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.QUEEN);
-}
-
-/**
- * Checks if the piece on the square is a Rook.
- * @param {object} square - The square to check.
- * @returns {boolean} - True if the piece is a Rook, false otherwise.
- */
-export function isRook(square) {
-    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.ROOK);
-}
-
-/**
- * Checks if the piece on the square is a Pawn.
- * @param {object} square - The square to check.
- * @returns {boolean} - True if the piece is a Pawn, false otherwise.
- */
-export function isPawn(square) {
-    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.PAWN);
-}
-
-/**
- * Checks if the piece on the square is a Knight.
- * @param {object} square - The square to check.
- * @returns {boolean} - True if the piece is a Knight, false otherwise.
- */
-export function isKnight(square) {
-    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.KNIGHT);
-}
-
-/**
  * Converts the first character of a string to uppercase and the rest to lowercase.
  * @param {string} value - The string to convert.
  * @returns {string} - The converted string with the first character in uppercase and the rest in lowercase.
@@ -847,7 +863,7 @@ export function enableEnPassant(square, targetSquare) {
     const color = getPieceColor(square);
     const isWhite = isColorWhite(color);
     const offset = isWhite ? -1 : 1;
-    const isPawn = isPawn(square);
+    const isThePieceAPawn = isPawn(square);
     const isTwoSquareMove = Math.abs(square.props.x - targetSquare.props.x) === 2;
 
     const updateEnPassant = (isPossible, x, y) => {
@@ -856,7 +872,7 @@ export function enableEnPassant(square, targetSquare) {
         GlobalVariables.EnPassant.y = y;
     };
 
-    if (isPawn && isTwoSquareMove) {
+    if (isThePieceAPawn && isTwoSquareMove) {
         updateEnPassant(true, square.props.x + offset, square.props.y);
     } else {
         updateEnPassant(false, -1, -1);
@@ -864,28 +880,85 @@ export function enableEnPassant(square, targetSquare) {
 }
 
 /**
- * Handles en passant capture logic.
+ * Checks if there are any pawns that can capture en passant from the given square.
+ *
+ * This function checks the neighboring squares to the left and right of the given square
+ * to see if they contain pawns of the opposite color that can potentially capture en passant.
+ *
+ * @param {object} square - The square to check from.
+ * @param {array} squares - The array representing the board squares.
+ * @returns {boolean} - True if there is at least one pawn that can capture en passant, false otherwise.
+ */
+export function areTherePawnsThatCanCaptureEnPassant(square, squares) {
+    const neighborsOffset = [1, -1];
+
+    const checkNeighbor = (n) => {
+        const x = square.props.x;
+        const y = square.props.y + n;
+
+        // Check if the coordinates are within bounds
+        if (!areCoordinatesInBounds(x, y)) {
+            return false;
+        }
+
+        const piece = getATargetSquareByLocation(x, y, squares);
+
+        // Check if the neighboring piece is a pawn and of the opposite color
+        const isThePieceAPawn = isPawn(piece);
+        const areTheyDifferentColor = !areSameColor(square, piece);
+
+        return isThePieceAPawn && areTheyDifferentColor;
+    };
+
+    // Return true if any neighboring square contains a pawn that can capture en passant
+    return neighborsOffset.some(n => checkNeighbor(n));
+}
+
+/**
+ * Handles the en passant capture logic.
+ * 
+ * This function updates the board position if an en passant capture is possible. 
+ * It checks if there are pawns that can perform an en passant capture, updates the 
+ * board position accordingly, and inverts the piece color for the en passant capture.
+ * 
  * @param {object} square - The square containing the piece that moved.
  * @param {object} targetSquare - The square to which the piece is moving.
- * @returns {Array} - The updated board position after en passant capture.
+ * @param {array} position - The current board position.
+ * @param {array} squares - The array representing the board squares.
+ * @returns {array} - The updated board position after en passant capture.
  */
-export function captureEnPassant(square, targetSquare) {
+export function captureEnPassant(square, targetSquare, position, squares) {
     const color = getPieceColor(square);
     const isWhite = isColorWhite(color);
     const offset = isWhite ? 1 : -1;
     const { isPossible } = GlobalVariables.EnPassant;
 
-    const enPassantCapture = (square, enPassantTargetSquare) => {
-        const emptySquare = <Square x={square.props.x} y={square.props.y} piece={""} />;
-        return HelperMethods.updateBoardPosition(emptySquare, enPassantTargetSquare);
-    };
+    if (isPossible && areTherePawnsThatCanCaptureEnPassant(square, squares)) {
+        const enPassantTargetSquare = getATargetSquareByLocation(targetSquare.props.x + offset, targetSquare.props.y, squares);
 
-    if (isPossible) {
-        const enPassantTargetSquare = HelperMethods.getATargetSquareByLocation(targetSquare.props.x + offset, targetSquare.props.y);
-        return enPassantCapture(square, enPassantTargetSquare);
+        if (enPassantTargetSquare) {
+            // Perform en passant capture
+            position = updateBoardPosition(square, enPassantTargetSquare);
+            // Invert the color of the piece being captured
+            const pseudoSquare = <Square x={enPassantTargetSquare.props.x} y={enPassantTargetSquare.props.y} piece={invertPieceColor(enPassantTargetSquare.props.piece)} />;
+            // Update the board position again after inverting the piece color
+            position = updateBoardPosition(pseudoSquare, targetSquare);
+        }
     }
 
-    return [];
+    return position;
+}
+
+/**
+ * Inverts the color of a piece.
+ * 
+ * @param {string} pseudo - The pseudo representation of the piece in {color-piece} format.
+ * @returns {string} - The piece with inverted color.
+ */
+function invertPieceColor(pseudo) {
+    const [color, piece] = pseudo.split(GlobalVariables.PIECE_DELIMITER);
+    const newColor = isColorWhite(color) ? GlobalVariables.COLORS.BLACK : GlobalVariables.COLORS.WHITE;
+    return `${newColor}${GlobalVariables.PIECE_DELIMITER}${piece}`;
 }
 
 /**
