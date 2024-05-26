@@ -47,6 +47,38 @@ function Board() {
     const boardSquaresRef = useRef(boardSquares);
 
     /**
+     * Updates the reference to the isPossibleMove array whenever we set a new value to the array.
+     */
+    useEffect(() => {
+        isPossibleMoveRef.current = isPossibleMove;
+        setBoardSquares(HelperMethods.fenParser(fen, isPossibleMoveRef.current, getPossibleMoves, movePiece, resetPossibleMoves, false));
+    }, [isPossibleMove]);
+
+    /**
+     * Called when the page loads.
+     * Removes all circles from squares indicating that they can be clicked to move a piece there.
+     * Parses the FEN to fill in the board.
+     */
+    useEffect(() => {
+        resetPossibleMoves();
+        setBoardSquares(HelperMethods.fenParser(fen, isPossibleMoveRef.current, getPossibleMoves, movePiece, resetPossibleMoves));
+    }, []);
+
+    /**
+     * Parses the FEN and fills in the board with the new position when the FEN updates.
+     */
+    useEffect(() => {
+        setBoardSquares(HelperMethods.fenParser(fen, isPossibleMoveRef.current, getPossibleMoves, movePiece, resetPossibleMoves));
+    }, [fen]);
+
+    /**
+     * Updates the reference to the BoardSquares array whenever we set a new value to the array.
+     */
+    useEffect(() => {
+        boardSquaresRef.current = boardSquares;
+    }, [boardSquares]);
+
+    /**
      * Updates the possible move array.
      * If a square is a possible move, it will receive a circle indicating you can move there.
      * 
@@ -67,45 +99,13 @@ function Board() {
     };
 
     /**
-     * Updates the reference to the isPossibleMove array whenever we set a new value to the array.
-     */
-    useEffect(() => {
-        isPossibleMoveRef.current = isPossibleMove;
-        setBoardSquares(HelperMethods.fenParser(fen, isPossibleMoveRef.current, movePiece, resetPossibleMoves, false));
-    }, [isPossibleMove]);
-
-    /**
-     * Called when the page loads.
-     * Removes all circles from squares indicating that they can be clicked to move a piece there.
-     * Parses the FEN to fill in the board.
-     */
-    useEffect(() => {
-        resetPossibleMoves();
-        setBoardSquares(HelperMethods.fenParser(fen, isPossibleMoveRef.current, movePiece, resetPossibleMoves));
-    }, []);
-
-    /**
-     * Parses the FEN and fills in the board with the new position when the FEN updates.
-     */
-    useEffect(() => {
-        setBoardSquares(HelperMethods.fenParser(fen, isPossibleMoveRef.current, movePiece, resetPossibleMoves));
-    }, [fen]);
-
-    /**
-     * Updates the reference to the BoardSquares array whenever we set a new value to the array.
-     */
-    useEffect(() => {
-        boardSquaresRef.current = boardSquares;
-    }, [boardSquares]);
-
-    /**
     * Resets possible moves highlighting.
     */
     function resetPossibleMoves() {
         const initialIsPossibleMove = [];
         for (let i = 0; i < GlobalVariables.DIM; i++) {
             for (let j = 0; j < GlobalVariables.DIM; j++) {
-                initialIsPossibleMove.push({ key: `${i}-${j}`, value: false });
+                initialIsPossibleMove.push({ key: `${i}${GlobalVariables.PIECE_DELIMITER}${j}`, value: false });
             }
         }
         setIsPossibleMove(initialIsPossibleMove);
@@ -123,174 +123,205 @@ function Board() {
         for (let i = 0; i < GlobalVariables.PossibleMoves.length; i++) {
             if (HelperMethods.checkIfAMoveIsEqualToTheCurrentSelectedSquare(GlobalVariables.PossibleMoves[i].piece)) {
                 for (let j = 0; j < GlobalVariables.PossibleMoves[i].moves.length; j++) {
-                    updateIsPossibleMove(`${GlobalVariables.PossibleMoves[i].moves[j].props.x}-${GlobalVariables.PossibleMoves[i].moves[j].props.y}`, true)
+                    updateIsPossibleMove(`${GlobalVariables.PossibleMoves[i].moves[j].props.x}${GlobalVariables.PIECE_DELIMITER}${GlobalVariables.PossibleMoves[i].moves[j].props.y}`, true)
                 }
             }
         }
     }
 
     /**
-     * Handles moving a piece to a new location.
-     * @param {number} x - The X coordinate.
-     * @param {number} y - The Y coordinate.
+     * Disables castling rights if the king or a rook moves.
+     * @param {object} square - The square containing the piece that moved.
+     */
+    function disableCastlingIfKingOrRookMoves(square) {
+        const color = HelperMethods.getPieceColor(square);
+        const piece = HelperMethods.getPiece(square);
+        const isWhite = HelperMethods.isColorWhite(color);
+
+        const updateCastlingRights = (color, type, value) => {
+            GlobalVariables.CastlingRights[`${color}${type}Castle`] = value;
+        };
+
+        if (piece === GlobalVariables.PIECES.KING) {
+            updateCastlingRights(isWhite ? GlobalVariables.COLORS.WHITE : GlobalVariables.COLORS.BLACK, 'Long', false);
+            updateCastlingRights(isWhite ? GlobalVariables.COLORS.WHITE : GlobalVariables.COLORS.BLACK, 'Short', false);
+        }
+
+        if (piece === GlobalVariables.PIECES.ROOK) {
+            const { x, y } = square.props;
+            const rookPositions = [
+                { row: GlobalVariables.CASTLE_ROW_WHITE, col: GlobalVariables.CASTLE_ROOK_INITIAL_COL_SHORT, type: 'Short', color: GlobalVariables.COLORS.WHITE },
+                { row: GlobalVariables.CASTLE_ROW_BLACK, col: GlobalVariables.CASTLE_ROOK_INITIAL_COL_SHORT, type: 'Short', color: GlobalVariables.COLORS.BLACK },
+                { row: GlobalVariables.CASTLE_ROW_WHITE, col: GlobalVariables.CASTLE_ROOK_INITIAL_COL_LONG, type: 'Long', color: GlobalVariables.COLORS.WHITE },
+                { row: GlobalVariables.CASTLE_ROW_BLACK, col: GlobalVariables.CASTLE_ROOK_INITIAL_COL_LONG, type: 'Long', color: GlobalVariables.COLORS.BLACK }
+            ];
+
+            rookPositions.forEach(pos => {
+                if (x === pos.row && y === pos.col) {
+                    updateCastlingRights(pos.color, pos.type, false);
+                }
+            });
+        }
+    }
+
+    /**
+     * Enables or disables en passant based on the move.
+     * @param {object} square - The square containing the piece that moved.
+     * @param {object} targetSquare - The square to which the piece is moving.
+     */
+    function enableEnPassant(square, targetSquare) {
+        const color = HelperMethods.getPieceColor(square);
+        const piece = HelperMethods.getPiece(square);
+        const isWhite = HelperMethods.isColorWhite(color);
+        const offset = isWhite ? -1 : 1;
+        const isPawn = HelperMethods.doesTheSquareHasThePiece(square, GlobalVariables.PIECES.PAWN);
+        const isTwoSquareMove = Math.abs(square.props.x - targetSquare.props.x) === 2;
+
+        const updateEnPassant = (isPossible, x, y) => {
+            GlobalVariables.EnPassant.isPossible = isPossible;
+            GlobalVariables.EnPassant.x = x;
+            GlobalVariables.EnPassant.y = y;
+        };
+
+        if (isPawn && isTwoSquareMove) {
+            updateEnPassant(true, square.props.x + offset, square.props.y);
+        } else {
+            updateEnPassant(false, -1, -1);
+        }
+    }
+
+    /**
+     * Handles en passant capture logic.
+     * @param {object} square - The square containing the piece that moved.
+     * @param {object} targetSquare - The square to which the piece is moving.
+     * @returns {Array} - The updated board position after en passant capture.
+     */
+    function captureEnPassant(square, targetSquare) {
+        const color = HelperMethods.getPieceColor(square);
+        const isWhite = HelperMethods.isColorWhite(color);
+        const offset = isWhite ? 1 : -1;
+        const { isPossible, x, y } = GlobalVariables.EnPassant;
+
+        const enPassantCapture = (square, targetSquare, enPassantTargetSquare) => {
+            const emptySquare = <Square x={square.props.x} y={square.props.y} piece={""} />;
+            return HelperMethods.updateBoardPosition(emptySquare, enPassantTargetSquare);
+        };
+
+        if (isPossible) {
+            const enPassantTargetSquare = HelperMethods.getATargetSquareByLocation(targetSquare.props.x + offset, targetSquare.props.y);
+            return enPassantCapture(square, targetSquare, enPassantTargetSquare);
+        }
+
+        return [];
+    }
+
+    /**
+     * Moves a piece on the board.
+     * @param {number} x - The x coordinate of the target square.
+     * @param {number} y - The y coordinate of the target square.
      */
     function movePiece(x, y) {
-        let squares = boardSquares
-        let position = GlobalVariables.BoardPosition
+        const squares = boardSquares;
+        const position = GlobalVariables.BoardPosition;
 
-        let targetSquare = HelperMethods.getATargetSquareByLocation(x, y, boardSquaresRef.current)
-        let square = squares.find(s => s.props.x == GlobalVariables.CurrentSquareSelection.x && s.props.y == GlobalVariables.CurrentSquareSelection.y)
+        const targetSquare = HelperMethods.getATargetSquareByLocation(x, y, boardSquaresRef.current);
+        const square = squares.find(s => HelperMethods.checkIfAMoveIsEqualToTheCurrentSelectedSquare(s));
 
-        let color = HelperMethods.getPieceColor(square)
-        let piece = HelperMethods.getPiece(square)
+        const color = HelperMethods.getPieceColor(square);
+        const piece = HelperMethods.getPiece(square);
 
-        //disable castling if the king moves
-        if (piece == GlobalVariables.PIECES.KING) {
-            if (HelperMethods.isColorWhite(color)) {
-                GlobalVariables.CastlingRights.whiteLongCastle = false
-                GlobalVariables.CastlingRights.whiteShortCastle = false
-            } else {
-                GlobalVariables.CastlingRights.blackLongCastle = false
-                GlobalVariables.CastlingRights.blackShortCastle = false
-            }
-        }
+        disableCastlingIfKingOrRookMoves(square);
 
-        //disable castling if the rook moves
-        if (piece == GlobalVariables.PIECES.ROOK) {
-            if (square.props.x == 7 && square.props.y == 7) {
-                GlobalVariables.CastlingRights.whiteShortCastle = false
-            }
+        let updatedPosition = HelperMethods.updateBoardPosition(square, targetSquare);
+        updatedPosition = captureEnPassant(square, targetSquare);
 
-            if (square.props.x == 0 && square.props.y == 7) {
-                GlobalVariables.CastlingRights.blackShortCastle = false
-            }
+        updateBoardState(updatedPosition);
+        resetPossibleMovesAndToggleTurn();
 
-            if (square.props.x == 7 && square.props.y == 0) {
-                GlobalVariables.CastlingRights.whiteLongCastle = false
-            }
+        enableEnPassant(square, targetSquare);
+        updateMoveCounters();
 
-            if (square.props.x == 0 && square.props.y == 0) {
-                GlobalVariables.CastlingRights.blackLongCastle = false
-            }
-        }
-
-        let p = HelperMethods.UpdatePosition(square, targetSquare, position)
-
-        //capturing enPassant
-        // if (EnPassant.isPossible) {
-        //     let enPassantTargetSquare = color == COLORS.WHITE ? squares.find(s => s.props.x == x + 1 && s.props.y == y) : squares.find(s => s.props.x == x - 1 && s.props.y == y)
-        //     let enPassantSquare = <Square x={square.props.x} y={square.props.y} piece={""} />
-
-        //     p = UpdatePosition(enPassantSquare, enPassantTargetSquare, p)
-        // }
-
-        //TODO: ensure p matches the new board Position format
-        //setBoardPosition(p)
-        const updatedBoardPosition = p.map(row => [...row]);
-        GlobalVariables.BoardPosition.splice(0, GlobalVariables.BoardPosition.length, ...updatedBoardPosition);
-
-        GlobalVariables.PossibleMoves.splice(0, GlobalVariables.PossibleMoves.length);
-        GlobalVariables.updateIsWhiteToMove(!GlobalVariables.IsWhiteToMove)
-
-        //enabling en passant
-        if (piece == GlobalVariables.PIECES.PAWN) {
-            if (Math.abs(square.props.x - targetSquare.props.x) == 2) {
-                if (square.props.piece.split(GlobalVariables.PIECE_DELIMITER)[0] == GlobalVariables.COLORS.WHITE) {
-                    GlobalVariables.EnPassant.isPossible = true
-                    GlobalVariables.EnPassant.x = square.props.x - 1
-                    GlobalVariables.EnPassant.y = square.props.y
-                } else {
-                    GlobalVariables.EnPassant.isPossible = true
-                    GlobalVariables.EnPassant.x = square.props.x + 1
-                    GlobalVariables.EnPassant.y = square.props.y
-                }
-
-                // let enPassant1 = squares.find(s => s.props.x == targetSquare.props.x && s.props.y == targetSquare.props.y - 1)
-                // let enPassant2 = squares.find(s => s.props.x == targetSquare.props.x && s.props.y == targetSquare.props.y + 1)
-
-                // if (enPassant1) {
-                //     if (enPassant1.props.piece.split(PIECE_DELIMITER)[1] == PIECES.PAWN) {
-                //         if (enPassant1.props.piece.split(PIECE_DELIMITER)[0] != color) {
-                //             EnPassant.isPossible = true
-                //             EnPassant.x = targetSquare.props.x
-                //             EnPassant.y = targetSquare.props.y
-                //             return
-                //         }
-                //     }
-                // }
-
-                // if (enPassant2) {
-                //     if (enPassant2.props.piece.split(PIECE_DELIMITER)[1] == PIECES.PAWN) {
-                //         if (enPassant2.props.piece.split(PIECE_DELIMITER)[0] != color) {
-                //             EnPassant.isPossible = true
-                //             EnPassant.x = targetSquare.props.x
-                //             EnPassant.y = targetSquare.props.y
-                //             return
-                //         }
-                //     }
-                // }
-            } else {
-                GlobalVariables.EnPassant.isPossible = false
-                GlobalVariables.EnPassant.x = -1
-                GlobalVariables.EnPassant.y = -1
-            }
-        } else {
-            GlobalVariables.EnPassant.isPossible = false
-            GlobalVariables.EnPassant.x = -1
-            GlobalVariables.EnPassant.y = -1
-        }
-
-        GlobalVariables.updateFullMoves(GlobalVariables.FullMoves + 1)
-
-        HelperMethods.generateANewFen()
+        HelperMethods.generateANewFen();
     }
 
     /**
-     * Gets possible moves for a piece.
-     * @param {object} square - The square object.
+     * Updates the global board state with the new position.
+     * @param {Array} updatedPosition - The updated board position after the move.
+     */
+    function updateBoardState(updatedPosition) {
+        const newPosition = updatedPosition.map(row => [...row]);
+        GlobalVariables.BoardPosition.splice(0, GlobalVariables.BoardPosition.length, ...newPosition);
+    }
+
+    /**
+     * Resets the possible moves array and toggles the player's turn.
+     */
+    function resetPossibleMovesAndToggleTurn() {
+        GlobalVariables.PossibleMoves.splice(0, GlobalVariables.PossibleMoves.length);
+        GlobalVariables.updateIsWhiteToMove(!GlobalVariables.IsWhiteToMove);
+    }
+
+    /**
+     * Updates the move counters for the game.
+     */
+    function updateMoveCounters() {
+        GlobalVariables.updateFullMoves(GlobalVariables.FullMoves + 1);
+    }
+
+    /**
+     * Retrieves and updates the possible moves for all pieces on the board.
      */
     function getPossibleMoves() {
-        //let square = getATargetSquareByLocation(x, y)
+        const squares = boardSquares;
         let possiblePieceMoves = [];
-        let squares = boardSquares
 
-        for (let i = 0; i < squares.length; i++) {
-            let square = squares[i]
-
-            //if the square has a piece
+        squares.forEach(square => {
             if (square.props.piece) {
-                let color = HelperMethods.getPieceColor(square); //get the piece color
+                const color = HelperMethods.getPieceColor(square);
 
-                //don't collect possible moves if it's black to move and you're trying to move a white piece
-                if (HelperMethods.isColorWhite(color) && !GlobalVariables.IsWhiteToMove) {
-                    //console.log(`Skipping because it's black to move and you're moving a white piece, x: ${square.props.x}, y: ${square.props.y}`)
-                    continue
+                if (isMoveAllowed(color)) {
+                    possiblePieceMoves.push(...collectPossibleMoves(square, squares));
                 }
-
-                //don't collect possible moves if it's white to move and you're trying to move a black piece
-                if (HelperMethods.isColorBlack(color) && GlobalVariables.IsWhiteToMove) {
-                    //console.log(`Skipping because it's white to move and you're moving a black piece, x: ${square.props.x}, y: ${square.props.y}`)
-                    continue
-                }
-
-                //console.log(`Getting possible moves, x: ${square.props.x}, y: ${square.props.y}`)
-                //get all possible moves for each piece
-                console.log(square, squares)
-                possiblePieceMoves = MoveHandling.getAllPossibleMoves(square, squares)
-
-                //filter empty moves
-                possiblePieceMoves = removeEmptyMoves(possiblePieceMoves);
-
-                //filter possible moves
-                possiblePieceMoves = filterMovesIfInCheck(possiblePieceMoves)
-                possiblePieceMoves = filterMovesThatAllowIllegalCastling(possiblePieceMoves)
             }
-        }
+        });
 
         console.log("Possible Moves:", possiblePieceMoves);
-        console.log('Moves count', possiblePieceMoves.reduce((sum, pieceMove) => sum + pieceMove.moves.length, 0))
+        console.log('Moves count', possiblePieceMoves.reduce((sum, pieceMove) => sum + pieceMove.moves.length, 0));
+
+        updatePossibleMoves(possiblePieceMoves);
+        updatePossibleMovesVisually();
+    }
+
+    /**
+     * Determines if a move is allowed based on the current player's turn.
+     * @param {string} color - The color of the piece.
+     * @returns {boolean} - True if the move is allowed, false otherwise.
+     */
+    function isMoveAllowed(color) {
+        return (HelperMethods.isColorWhite(color) && GlobalVariables.IsWhiteToMove) ||
+            (HelperMethods.isColorBlack(color) && !GlobalVariables.IsWhiteToMove);
+    }
+
+    /**
+     * Collects possible moves for a given square.
+     * @param {object} square - The square to collect moves for.
+     * @param {Array} squares - The current board squares.
+     * @returns {Array} - The possible moves for the piece on the square.
+     */
+    function collectPossibleMoves(square, squares) {
+        let possiblePieceMoves = MoveHandling.getAllPossibleMoves(square, squares);
+        possiblePieceMoves = MoveHandling.removeEmptyMoves(possiblePieceMoves);
+        possiblePieceMoves = MoveHandling.filterMovesIfInCheck(possiblePieceMoves, boardSquaresRef.current);
+        possiblePieceMoves = MoveHandling.filterMovesThatAllowIllegalCastling(possiblePieceMoves, boardSquaresRef.current);
+        return possiblePieceMoves;
+    }
+
+    /**
+     * Updates the global possible moves array.
+     * @param {Array} possiblePieceMoves - The possible moves to update.
+     */
+    function updatePossibleMoves(possiblePieceMoves) {
         GlobalVariables.PossibleMoves.splice(0, GlobalVariables.PossibleMoves.length, ...possiblePieceMoves);
-        updatePossibleMovesVisually()
     }
 
     //renders the board

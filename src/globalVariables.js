@@ -1,6 +1,9 @@
-// Board dimensions and piece delimiter
+// Board related constants
 export const DIM = 8; // 8x8 Board
 export const PIECE_DELIMITER = '-'; // Format: {color-piece}, e.g., {black-pawn}
+export const DARK_SQUARES_COLOR = 'dark'
+export const EMPTY_SPACE = " "
+export const EMPTY_STRING = ""
 
 // Color options (ENUM)
 export const COLORS = Object.freeze({
@@ -92,6 +95,12 @@ export const FEN_PIECES_BLACK = Object.freeze({
     KING: "k",
     QUEEN: "q"
 });
+export const FEN_BOARD_DELIMITER = '/'
+export const FEN_COLOR = {
+    WHITE: "w",
+    BLACK: "b"
+}
+export const FEN_VALID_PARTS_NUMBER = 6
 
 // Castling constants
 export const CASTLE_ROW_WHITE = 7;
@@ -117,3 +126,11 @@ export const CASTLING_TYPES = Object.freeze({
     LONG: "long",
     SHORT: "short"
 });
+
+//ASCII Values
+export const ASCII_UPPERCASE_A = 65;
+export const ASCII_UPPERCASE_Z = 90;
+export const ASCII_LOWERCASE_A = 97;
+export const ASCII_LOWERCASE_Z = 122;
+export const ASCII_DIGIT_0 = 48
+export const ASCII_DIGIT_9 = 57

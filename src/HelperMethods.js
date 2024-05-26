@@ -1,7 +1,6 @@
 import React from 'react';
 import Square from "./Square.js"
 import * as GlobalVariables from './globalVariables';
-import * as MoveHandling from './MoveHandler.js'
 
 /**
  * Checks if a character is Uppercase using the ASCII table.
@@ -9,7 +8,17 @@ import * as MoveHandling from './MoveHandler.js'
  * @returns {boolean} - True if the character is uppercase, false otherwise.
  */
 export function IsUpperCase(value) {
-    return value.charCodeAt(0) >= 65 && value.charCodeAt(0) <= 90;
+    const firstChar = getFirstCharacter(value)
+    return firstChar >= GlobalVariables.ASCII_UPPERCASE_A && firstChar <= GlobalVariables.ASCII_UPPERCASE_Z;
+}
+
+/**
+ * Returns the ASCII code of the first character of a string.
+ * @param {string} value - The string from which to get the ASCII code.
+ * @returns {number} - The ASCII code of the first character.
+ */
+export function getFirstCharacter(value) {
+    return value.charCodeAt(0);
 }
 
 /**
@@ -18,7 +27,8 @@ export function IsUpperCase(value) {
  * @returns {boolean} - True if the character is lowercase, false otherwise.
  */
 export function IsLowerCase(value) {
-    return value.charCodeAt(0) >= 97 && value.charCodeAt(0) <= 122;
+    const firstChar = getFirstCharacter(value)
+    return firstChar >= GlobalVariables.ASCII_LOWERCASE_A && firstChar <= GlobalVariables.ASCII_LOWERCASE_Z;
 }
 
 /**
@@ -27,7 +37,8 @@ export function IsLowerCase(value) {
  * @returns {boolean} - True if the character is a digit, false otherwise.
  */
 export function IsDigit(value) {
-    return value.charCodeAt(0) >= 48 && value.charCodeAt(0) <= 57;
+    const firstChar = getFirstCharacter(value)
+    return firstChar >= GlobalVariables.ASCII_DIGIT_0 && firstChar <= GlobalVariables.ASCII_DIGIT_9;
 }
 
 /**
@@ -36,8 +47,8 @@ export function IsDigit(value) {
  * @returns {object} - An object containing the FEN components.
  */
 export function ParseFEN(fen) {
-    const fenParts = fen.split(' ');
-    if (fenParts.length !== 6) {
+    const fenParts = fen.split(GlobalVariables.EMPTY_SPACE);
+    if (fenParts.length !== GlobalVariables.FEN_VALID_PARTS_NUMBER) {
         throw new Error('Invalid FEN');
     }
     const [fenBoard, fenTurn, fenCastling, fenEnPassant, fenHalfMoves, fenFullMoves] = fenParts;
@@ -66,7 +77,7 @@ export function ConvertFENtoPiece(letter) {
         [GlobalVariables.FEN_PIECES_BLACK.BISHOP]: GlobalVariables.PIECES.BISHOP,
     };
 
-    return FEN_PIECE_MAP[letter.toLowerCase()] || "";
+    return FEN_PIECE_MAP[letter.toLowerCase()] || GlobalVariables.EMPTY_STRING;
 }
 
 /**
@@ -76,14 +87,14 @@ export function ConvertFENtoPiece(letter) {
  */
 export function ConvertFENPieceToPiece(value) {
     if (IsUpperCase(value)) {
-        return `${GlobalVariables.COLORS.WHITE}-${ConvertFENtoPiece(value)}`;
+        return `${GlobalVariables.COLORS.WHITE}${GlobalVariables.PIECE_DELIMITER}${ConvertFENtoPiece(value)}`;
     }
 
     if (IsLowerCase(value)) {
-        return `${GlobalVariables.COLORS.BLACK}-${ConvertFENtoPiece(value)}`;
+        return `${GlobalVariables.COLORS.BLACK}${GlobalVariables.PIECE_DELIMITER}${ConvertFENtoPiece(value)}`;
     }
 
-    return "";
+    return GlobalVariables.EMPTY_STRING;
 }
 
 /**
@@ -92,12 +103,12 @@ export function ConvertFENPieceToPiece(value) {
  * @returns {string} - The normal string.
  */
 export function ConvertFenToString(value) {
-    return value.split('').reduce((result, char) => {
+    return value.split(GlobalVariables.EMPTY_STRING).reduce((result, char) => {
         if (IsDigit(char)) {
             return result + GlobalVariables.EMPTY_SQUARE_PIECE.repeat(Number(char));
         }
         return result + char;
-    }, '');
+    }, GlobalVariables.EMPTY_STRING);
 }
 
 /**
@@ -111,6 +122,16 @@ export function checkIfTwoSquaresAreOnTheSameRow(square1, square2) {
 }
 
 /**
+ * Checks if two squares are on the same column.
+ * @param {object} square1 - The first square to check.
+ * @param {object} square2 - The second square to check.
+ * @returns {boolean} - True if both squares are on the same column, false otherwise.
+ */
+export function checkIfTwoSquaresAreOnTheSameColumn(square1, square2) {
+    return square1.props.y === square2.props.y;
+}
+
+/**
  * Checks if the square is on the given row number.
  * @param {object} square - The square to check.
  * @param {number} rowNumber - The row number.
@@ -118,6 +139,16 @@ export function checkIfTwoSquaresAreOnTheSameRow(square1, square2) {
  */
 export function isSquareOnRow(square, rowNumber) {
     return square.props.x === rowNumber;
+}
+
+/**
+ * Checks if the square is on the given column number.
+ * @param {object} square - The square to check.
+ * @param {number} columnNumber - The column number.
+ * @returns {boolean} - True if the square is on the given column, false otherwise.
+ */
+export function isSquareOnColumn(square, columnNumber) {
+    return square.props.y === columnNumber;
 }
 
 /**
@@ -173,9 +204,7 @@ export function isColorBlack(color) {
  * @returns {boolean} - True if the pieces are of the same color, false otherwise.
  */
 export function areSameColor(piece1, piece2) {
-    const color1 = piece1.split(GlobalVariables.PIECE_DELIMITER)[GlobalVariables.PIECE_COLOR_INDEX];
-    const color2 = piece2.split(GlobalVariables.PIECE_DELIMITER)[GlobalVariables.PIECE_COLOR_INDEX];
-    return color1 === color2;
+    return getPieceColor(piece1) === getPieceColor(piece2);
 }
 
 /**
@@ -184,7 +213,7 @@ export function areSameColor(piece1, piece2) {
  * @returns {boolean} - True if the move is equal to the current selected square, false otherwise.
  */
 export function checkIfAMoveIsEqualToTheCurrentSelectedSquare(move) {
-    return move.props.x === GlobalVariables.CurrentSquareSelection.x && move.props.y === GlobalVariables.CurrentSquareSelection.y;
+    return isSquareOnRow(move, GlobalVariables.CurrentSquareSelection.x) && isSquareOnColumn(move, GlobalVariables.CurrentSquareSelection.y)
 }
 
 /**
@@ -194,33 +223,28 @@ export function checkIfAMoveIsEqualToTheCurrentSelectedSquare(move) {
  * @returns {boolean} - True if the squares are the same, false otherwise.
  */
 export function compareIfTwoSquaresAreTheSame(square1, square2) {
-    return square1.props.x === square2.props.x && square1.props.y === square2.props.y;
+    return checkIfTwoSquaresAreOnTheSameRow(square1, square2) && checkIfTwoSquaresAreOnTheSameColumn(square1, square2);
 }
 
 /**
  * Gets a target square by its location.
  * @param {number} x - The x coordinate of the target square.
  * @param {number} y - The y coordinate of the target square.
+ * @param {array} squares - The board squares array.
  * @returns {object} - The target square.
  */
-export function getATargetSquareByLocation(x, y) {
-    return GlobalVariables.BoardPosition[x][y];
+export function getATargetSquareByLocation(x, y, squares) {
+    return squares.find(s => isSquareOnRow(s, x) && isSquareOnColumn(s, y))
 }
 
 /**
  * Gets a target square by its piece.
  * @param {string} piece - The piece to search for.
+ * @param {array} squares - The board squares array.
  * @returns {object} - The target square.
  */
-export function getATargetSquareByPiece(piece) {
-    for (let row of GlobalVariables.BoardPosition) {
-        for (let square of row) {
-            if (square.props.piece === piece) {
-                return square;
-            }
-        }
-    }
-    return null;
+export function getATargetSquareByPiece(piece, squares) {
+    return squares.find(s => s.props.piece == piece)
 }
 
 /**
@@ -248,7 +272,7 @@ export function isCastlingPossible(castlingType, withWhite = true) {
  */
 export function isPawnOnStartingSquare(pawn) {
     const isWhite = isColorWhite(getPieceColor(pawn));
-    return isWhite ? pawn.props.x === GlobalVariables.WHITE_PAWN_STARTING_SQUARE : pawn.props.x === GlobalVariables.BLACK_PAWN_STARTING_SQUARE;
+    return isWhite ? isSquareOnRow(pawn, GlobalVariables.WHITE_PAWN_STARTING_SQUARE) : isSquareOnRow(pawn, GlobalVariables.BLACK_PAWN_STARTING_SQUARE);
 }
 
 /**
@@ -258,7 +282,7 @@ export function isPawnOnStartingSquare(pawn) {
  */
 export function isPawnOnEnPassantSquare(pawn) {
     const isWhite = isColorWhite(getPieceColor(pawn));
-    return isWhite ? pawn.props.x === GlobalVariables.WHITE_EN_PASSANT_SQUARE : pawn.props.x === GlobalVariables.BLACK_EN_PASSANT_SQUARE;
+    return isWhite ? isSquareOnRow(pawn, GlobalVariables.WHITE_EN_PASSANT_SQUARE) : isSquareOnRow(pawn, GlobalVariables.BLACK_EN_PASSANT_SQUARE);
 }
 
 /**
@@ -307,6 +331,14 @@ export function handleTargetSquareOnCurrentRow(currentSquare, targetSquare, row)
 }
 
 /**
+ * Checks if castling is possible for either side.
+ * @returns {boolean} - True if castling is possible for either side, false otherwise.
+ */
+export function canWeCastle() {
+    return Object.values(GlobalVariables.CastlingRights).some(s => s);
+}
+
+/**
  * Checks if we're making a move on the same row and performs castling if we want to castle.
  * @param {object} currentSquare - The current square.
  * @param {object} targetSquare - The target square.
@@ -314,7 +346,7 @@ export function handleTargetSquareOnCurrentRow(currentSquare, targetSquare, row)
  * @returns {Array} - The updated row.
  */
 export function handleSquareAndTargetSquareOnTheSameRow(currentSquare, targetSquare, row) {
-    if (doesTheSquareHasThePiece(currentSquare, GlobalVariables.PIECES.KING) && isCastlingPossible(currentSquare, targetSquare)) {
+    if (isKing(currentSquare) && canWeCastle()) {
         return handleCastling(currentSquare, row);
     }
     return SidewaysCapture(row, Number(currentSquare.props.y), Number(targetSquare.props.y), currentSquare.props.piece);
@@ -353,17 +385,17 @@ export function handleCastling(square, row) {
  */
 export function convertRowToFEN(row) {
     return row.reduce((acc, column) => {
-        if (column === EMPTY_SQUARE_PIECE) {
+        if (column === GlobalVariables.EMPTY_SQUARE_PIECE) {
             const lastChar = acc.slice(-1);
             if (IsDigit(lastChar)) {
-                return acc.slice(0, -1) + (Number(lastChar) + 1);
+                return acc.slice(0, -1) + (Number(lastChar) + 1); //add 1 to the previous number if an empty space
             } else {
-                return acc + '1';
+                return acc + '1'; //set the next piece as 1 (1 empty space)
             }
         } else {
-            return acc + column;
+            return acc + column; //return the piece if no empty spaces
         }
-    }, '');
+    }, GlobalVariables.EMPTY_STRING);
 }
 
 /**
@@ -371,9 +403,17 @@ export function convertRowToFEN(row) {
  * @returns {string} - The castling rules.
  */
 export function getCastlingRules() {
-    return Object.values(GlobalVariables.CastlingRights)
-        .map(right => (right ? right : ""))
-        .join("") || "-";
+    const sortedKeys = getSortedCastlingKeys();
+
+    const castlingMap = {
+        [sortedKeys[0]]: GlobalVariables.FEN_PIECES_BLACK.QUEEN, // 'blackLongCastle'
+        [sortedKeys[1]]: GlobalVariables.FEN_PIECES_BLACK.KING, // 'blackShortCastle'
+        [sortedKeys[2]]: GlobalVariables.FEN_PIECES_WHITE.QUEEN, // 'whiteLongCastle'
+        [sortedKeys[3]]: GlobalVariables.FEN_PIECES_WHITE.KING  // 'whiteShortCastle'
+    };
+
+    return sortedKeys.map(key => GlobalVariables.CastlingRights[key] ? castlingMap[key] :
+        GlobalVariables.EMPTY_STRING).join(GlobalVariables.EMPTY_STRING) || GlobalVariables.PIECE_DELIMITER
 }
 
 /**
@@ -381,12 +421,12 @@ export function getCastlingRules() {
  * @returns {string} - The new FEN string.
  */
 export function generateANewFen() {
-    const fenRows = GlobalVariables.BoardPosition.map(row => convertRowToFEN(row)).join('/');
-    const turn = GlobalVariables.IsWhiteToMove ? 'w' : 'b';
+    const fenRows = GlobalVariables.BoardPosition.map(row => convertRowToFEN(row)).join(GlobalVariables.FEN_BOARD_DELIMITER);
+    const turn = GlobalVariables.IsWhiteToMove ? GlobalVariables.FEN_COLOR.WHITE : GlobalVariables.FEN_COLOR.BLACK;
     const castling = getCastlingRules();
     const enPassant = GlobalVariables.EnPassant.isPossible
         ? convertLocationToCoordinates(GlobalVariables.EnPassant.x, GlobalVariables.EnPassant.y)
-        : '-';
+        : GlobalVariables.PIECE_DELIMITER;
     const halfMoves = GlobalVariables.HalfMoves;
     const fullMoves = GlobalVariables.FullMoves;
 
@@ -394,17 +434,29 @@ export function generateANewFen() {
 }
 
 /**
+ * Returns the keys of the CastlingRights object in alphabetical order.
+ * @returns {Array<string>} - The sorted keys of CastlingRights.
+ */
+export function getSortedCastlingKeys() {
+    return Object.keys(GlobalVariables.CastlingRights).sort();
+}
+
+/**
  * Updates castling rights based on the given castling string.
  * @param {string} castling - The castling rights string (e.g., 'KQkq').
  */
 export function updateCastlingRights(castling) {
+    const sortedKeys = getSortedCastlingKeys();
+
+    // Create a map based on the sorted keys to ensure consistency
     const castlingMap = {
-        'K': 'whiteShortCastle',
-        'Q': 'whiteLongCastle',
-        'k': 'blackShortCastle',
-        'q': 'blackLongCastle'
+        [GlobalVariables.FEN_PIECES_BLACK.QUEEN]: sortedKeys[0], // 'blackLongCastle'
+        [GlobalVariables.FEN_PIECES_BLACK.KING]: sortedKeys[1], // 'blackShortCastle'
+        [GlobalVariables.FEN_PIECES_WHITE.QUEEN]: sortedKeys[2], // 'whiteLongCastle'
+        [GlobalVariables.FEN_PIECES_WHITE.KING]: sortedKeys[3]  // 'whiteShortCastle'
     };
 
+    // Update castling rights using the castling map
     Object.keys(castlingMap).forEach(key => {
         GlobalVariables.CastlingRights[castlingMap[key]] = castling.includes(key);
     });
@@ -445,14 +497,14 @@ export function fenParser(fen, isPossibleMove, getPossibleMoves, movePiece, rese
         fenFullMoves
     } = ParseFEN(fen);
 
-    const fenRows = fenBoard.split('/');
-    const boardArray = fenRows.map(row => ConvertFenToString(row).split(''));
+    const fenRows = fenBoard.split(GlobalVariables.FEN_BOARD_DELIMITER);
+    const boardArray = fenRows.map(row => ConvertFenToString(row).split(GlobalVariables.EMPTY_STRING));
 
     const squares = generateSquareComponents(boardArray, isPossibleMove, getPossibleMoves, movePiece, resetPossibleMoves);
 
     updateCastlingRights(fenCastling);
 
-    GlobalVariables.updateIsWhiteToMove(fenTurn === 'w');
+    GlobalVariables.updateIsWhiteToMove(fenTurn === GlobalVariables.FEN_COLOR.WHITE);
     GlobalVariables.updateHalfMoves(fenHalfMoves);
     GlobalVariables.updateFullMoves(fenFullMoves);
 
@@ -533,11 +585,11 @@ export function generateSquareComponents(boardSquares, isPossibleMove, getPossib
 
     const squares = boardSquares.flatMap((row, rowIndex) => {
         const rowSquares = row.map((square, colIndex) => {
-            const color = squareColorIsWhite ? "" : "dark";
-            const possibleMoveStatus = isPossibleMove.find(item => item.key === `${rowIndex}-${colIndex}`);
+            const color = squareColorIsWhite ? GlobalVariables.EMPTY_STRING : GlobalVariables.DARK_SQUARES_COLOR;
+            const possibleMoveStatus = isPossibleMove.find(item => item.key === `${rowIndex}${GlobalVariables.PIECE_DELIMITER}${colIndex}`);
             const squareComponent = (
                 <Square
-                    key={`${rowIndex}-${colIndex}`}
+                    key={`${rowIndex}${GlobalVariables.PIECE_DELIMITER}${colIndex}`}
                     x={rowIndex}
                     y={colIndex}
                     piece={ConvertFENPieceToPiece(square)}
@@ -564,7 +616,7 @@ export function generateSquareComponents(boardSquares, isPossibleMove, getPossib
  * @returns {object} - Returns an object with x and y properties.
  */
 export function convertCoordinatesToLocation(coordinates) {
-    let tokens = coordinates.split('')
+    let tokens = coordinates.split(GlobalVariables.EMPTY_STRING)
 
     //skip invalid coordinates
     if (tokens.length != 2) {
@@ -576,7 +628,7 @@ export function convertCoordinatesToLocation(coordinates) {
 
     //65 is the ASCII code for capital A which will give us 0 if we have A as a coordinate; A-F will give us 0-7 for y (columns)
     //reverse the numbers since we draw the board top down for x (rows)
-    return { x: GlobalVariables.DIM - Number(number), y: letter.charCodeAt(0) - 65 }
+    return { x: GlobalVariables.DIM - Number(number), y: getFirstCharacter(letter) - GlobalVariables.ASCII_UPPERCASE_A }
 }
 
 /**
@@ -588,7 +640,7 @@ export function convertCoordinatesToLocation(coordinates) {
 export function convertLocationToCoordinates(x, y) {
     //maps y (column) to the letter coordinate; add 65 (capital A code) to the ASCII code for the location we have and we get a letter between A and F
     //reverses the x (rows) coordinate because we drop the board top down, while coordinates go down up
-    return `${String.fromCharCode(y + 65)}${GlobalVariables.DIM - x}`.toLowerCase()
+    return `${String.fromCharCode(y + GlobalVariables.ASCII_UPPERCASE_A)}${GlobalVariables.DIM - x}`.toLowerCase()
 }
 
 /**
@@ -597,16 +649,17 @@ export function convertLocationToCoordinates(x, y) {
  * @param {object} [pseudo] - The square where a piece is hypothetically moved.
  * @param {object} [currentSquare=null] - The square of the piece being moved.
  * @param {string} color - The color of the king ('white' or 'black').
+ * @param {array} boardSquares - The board squares array.
  * @returns {boolean} - True if the king is in check, false otherwise.
  */
-export function isKingInCheck(kingSquare, pseudo, currentSquare = null, color) {
-    const squares = boardSquaresRef.current;
+export function isKingInCheck(kingSquare, pseudo, currentSquare = null, color, boardSquares) {
+    const squares = boardSquares;
 
     const updatedSquares = squares.map(s => {
-        if (pseudo && s.props.x === pseudo.props.x && s.props.y === pseudo.props.y) {
+        if (pseudo && compareIfTwoSquaresAreTheSame(s, pseudo)) {
             return React.cloneElement(s, { piece: pseudo.props.piece });
-        } else if (currentSquare && s.props.x === currentSquare.props.x && s.props.y === currentSquare.props.y) {
-            return React.cloneElement(s, { piece: '' });
+        } else if (currentSquare && compareIfTwoSquaresAreTheSame(s, currentSquare)) {
+            return React.cloneElement(s, { piece: GlobalVariables.EMPTY_STRING });
         } else {
             return s;
         }
@@ -615,11 +668,12 @@ export function isKingInCheck(kingSquare, pseudo, currentSquare = null, color) {
     const checkDirections = (directions) => {
         for (const [dx, dy] of directions) {
             for (let i = 1; i < GlobalVariables.DIM; i++) {
-                const piece = updatedSquares.find(s => s.props.x === kingSquare.props.x + dx * i && s.props.y === kingSquare.props.y + dy * i);
+                const piece = updatedSquares.find(s => isSquareOnRow(s, kingSquare.props.x + dx * i) && isSquareOnColumn(s, kingSquare.props.y + dy * i));
                 if (!piece) break;
-                const [pieceColor, pieceType] = piece.props.piece.split("-");
+                const [pieceColor, pieceType] = piece.props.piece.split(GlobalVariables.PIECE_DELIMITER);
                 if (pieceColor !== color) {
-                    if (pieceType === "queen" || pieceType === "rook" || pieceType === "bishop" || (i === 1 && pieceType === "pawn" && (dx === -1 || dx === 1))) {
+                    if (pieceType === GlobalVariables.PIECES.QUEEN || pieceType === GlobalVariables.PIECES.ROOK ||
+                        pieceType === GlobalVariables.PIECES.BISHOP || (i === 1 && pieceType === GlobalVariables.PIECES.PAWN && (dx === -1 || dx === 1))) {
                         return true;
                     }
                     if (piece.props.piece) break;
@@ -649,8 +703,8 @@ export function isKingInCheck(kingSquare, pseudo, currentSquare = null, color) {
     ];
 
     for (const [dx, dy] of knightMoves) {
-        const piece = updatedSquares.find(s => s.props.x === kingSquare.props.x + dx && s.props.y === kingSquare.props.y + dy);
-        if (piece && piece.props.piece.split("-")[0] !== color && piece.props.piece.split("-")[1] === "knight") {
+        const piece = updatedSquares.find(s => isSquareOnRow(s, kingSquare.props.x + dx) && isSquareOnColumn(s, kingSquare.props.y + dy));
+        if (piece && getPieceColor(piece) !== color && getPiece(piece) === GlobalVariables.PIECES.KNIGHT) {
             return true;
         }
     }
@@ -663,10 +717,11 @@ export function isKingInCheck(kingSquare, pseudo, currentSquare = null, color) {
  * @param {object} kingSquare - The square where the king is located.
  * @param {object} [pseudo] - The square where a piece is hypothetically moved.
  * @param {object} [currentSquare=null] - The square of the piece being moved.
+ * @param {array} boardSquares - The board squares array.
  * @returns {boolean} - True if the white king is in check, false otherwise.
  */
-export function isWhiteInCheck(kingSquare, pseudo, currentSquare = null) {
-    return isKingInCheck(kingSquare, pseudo, currentSquare, 'white');
+export function isWhiteInCheck(kingSquare, pseudo, currentSquare = null, boardSquares) {
+    return isKingInCheck(kingSquare, pseudo, currentSquare, GlobalVariables.COLORS.WHITE, boardSquares);
 }
 
 /**
@@ -674,8 +729,63 @@ export function isWhiteInCheck(kingSquare, pseudo, currentSquare = null) {
  * @param {object} kingSquare - The square where the king is located.
  * @param {object} [pseudo] - The square where a piece is hypothetically moved.
  * @param {object} [currentSquare=null] - The square of the piece being moved.
+ * @param {array} boardSquares - The board squares array.
  * @returns {boolean} - True if the black king is in check, false otherwise.
  */
-export function isBlackInCheck(kingSquare, pseudo, currentSquare = null) {
-    return isKingInCheck(kingSquare, pseudo, currentSquare, 'black');
+export function isBlackInCheck(kingSquare, pseudo, currentSquare = null, boardSquares) {
+    return isKingInCheck(kingSquare, pseudo, currentSquare, GlobalVariables.COLORS.BLACK, boardSquares);
+}
+
+/**
+ * Checks if the piece on the square is a King.
+ * @param {object} square - The square to check.
+ * @returns {boolean} - True if the piece is a King, false otherwise.
+ */
+export function isKing(square) {
+    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.KING);
+}
+
+/**
+ * Checks if the piece on the square is a Bishop.
+ * @param {object} square - The square to check.
+ * @returns {boolean} - True if the piece is a Bishop, false otherwise.
+ */
+export function isBishop(square) {
+    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.BISHOP);
+}
+
+/**
+ * Checks if the piece on the square is a Queen.
+ * @param {object} square - The square to check.
+ * @returns {boolean} - True if the piece is a Queen, false otherwise.
+ */
+export function isQueen(square) {
+    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.QUEEN);
+}
+
+/**
+ * Checks if the piece on the square is a Rook.
+ * @param {object} square - The square to check.
+ * @returns {boolean} - True if the piece is a Rook, false otherwise.
+ */
+export function isRook(square) {
+    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.ROOK);
+}
+
+/**
+ * Checks if the piece on the square is a Pawn.
+ * @param {object} square - The square to check.
+ * @returns {boolean} - True if the piece is a Pawn, false otherwise.
+ */
+export function isPawn(square) {
+    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.PAWN);
+}
+
+/**
+ * Checks if the piece on the square is a Knight.
+ * @param {object} square - The square to check.
+ * @returns {boolean} - True if the piece is a Knight, false otherwise.
+ */
+export function isKnight(square) {
+    return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.KNIGHT);
 }

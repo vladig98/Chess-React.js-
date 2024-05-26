@@ -1,32 +1,27 @@
 import * as GlobalVariables from './globalVariables';
 import * as HelperMethods from './HelperMethods';
+import Square from "./Square.js"
 
 /**
- * Gets all possible moves for a piece.
- * @param {object} square - The current square.
- * @param {Array} boardSquares - The current board squares.
- * @returns {Array} - The possible moves array.
+ * Returns all possible moves for a given square based on the piece type.
+ * @param {object} square - The square containing the piece.
+ * @param {Array} boardSquares - The current state of the board.
+ * @returns {Array} - The possible moves for the piece on the given square.
  */
 export function getAllPossibleMoves(square, boardSquares) {
-    const piece = HelperMethods.getPiece(square);
     const pieceColor = HelperMethods.getPieceColor(square);
+    const pieceType = HelperMethods.getPiece(square);
+    const moveHandlers = {
+        [GlobalVariables.PIECES.PAWN]: getPawnMoves,
+        [GlobalVariables.PIECES.ROOK]: getRookMoves,
+        [GlobalVariables.PIECES.KNIGHT]: getKnightMoves,
+        [GlobalVariables.PIECES.BISHOP]: getBishopMoves,
+        [GlobalVariables.PIECES.QUEEN]: getQueenMoves,
+        [GlobalVariables.PIECES.KING]: getKingMoves,
+    };
 
-    switch (piece) {
-        case GlobalVariables.PIECES.PAWN:
-            return getPawnMoves(square, boardSquares, pieceColor);
-        case GlobalVariables.PIECES.ROOK:
-            return getRookMoves(square, boardSquares, pieceColor);
-        case GlobalVariables.PIECES.KNIGHT:
-            return getKnightMoves(square, boardSquares, pieceColor);
-        case GlobalVariables.PIECES.BISHOP:
-            return getBishopMoves(square, boardSquares, pieceColor);
-        case GlobalVariables.PIECES.QUEEN:
-            return getQueenMoves(square, boardSquares, pieceColor);
-        case GlobalVariables.PIECES.KING:
-            return getKingMoves(square, boardSquares, pieceColor);
-        default:
-            return [];
-    }
+    const moveHandler = moveHandlers[pieceType];
+    return moveHandler ? moveHandler(square, boardSquares, pieceColor) : [];
 }
 
 /**
@@ -85,11 +80,11 @@ function getMovesInDirection(square, boardSquares, [xIncrement, yIncrement]) {
  * Gets possible moves for a pawn.
  * @param {object} square - The current square.
  * @param {Array} boardSquares - The current board squares.
- * @param {string} pieceColor - The color of the piece.
  * @returns {Array} - The possible moves array.
  */
-function getPawnMoves(square, boardSquares, pieceColor) {
+function getPawnMoves(square, boardSquares) {
     const moves = []
+    const pieceColor = HelperMethods.getPieceColor(square)
     const isWhite = HelperMethods.isColorWhite(pieceColor);
     const direction = isWhite ? -1 : 1;
 
@@ -160,10 +155,9 @@ function getPawnMoves(square, boardSquares, pieceColor) {
  * Gets possible moves for a rook.
  * @param {object} square - The current square.
  * @param {Array} boardSquares - The current board squares.
- * @param {string} _pieceColor - The color of the piece.
  * @returns {Array} - The possible moves array.
  */
-function getRookMoves(square, boardSquares, _pieceColor) {
+function getRookMoves(square, boardSquares) {
     const directions = [
         [1, 0],  // Right
         [-1, 0], // Left
@@ -180,10 +174,9 @@ function getRookMoves(square, boardSquares, _pieceColor) {
  * Gets possible moves for a knight.
  * @param {object} square - The current square.
  * @param {Array} boardSquares - The current board squares.
- * @param {string} _pieceColor - The color of the piece.
  * @returns {Array} - The possible moves array.
  */
-function getKnightMoves(square, boardSquares, _pieceColor) {
+function getKnightMoves(square, boardSquares) {
     const knightMoves = [
         [2, 1], [1, 2], [-1, 2], [-2, 1],
         [-2, -1], [-1, -2], [1, -2], [2, -1]
@@ -197,10 +190,9 @@ function getKnightMoves(square, boardSquares, _pieceColor) {
  * Gets possible moves for a bishop.
  * @param {object} square - The current square.
  * @param {Array} boardSquares - The current board squares.
- * @param {string} _pieceColor - The color of the piece.
  * @returns {Array} - The possible moves array.
  */
-function getBishopMoves(square, boardSquares, _pieceColor) {
+function getBishopMoves(square, boardSquares) {
     const directions = [
         [-1, -1], // Top-left diagonal
         [-1, 1],  // Bottom-left diagonal
@@ -217,10 +209,9 @@ function getBishopMoves(square, boardSquares, _pieceColor) {
  * Gets possible moves for a queen.
  * @param {object} square - The current square.
  * @param {Array} boardSquares - The current board squares.
- * @param {string} _pieceColor - The color of the piece.
  * @returns {Array} - The possible moves array.
  */
-function getQueenMoves(square, boardSquares, _pieceColor) {
+function getQueenMoves(square, boardSquares) {
     const directions = [
         [1, 0], [-1, 0], [0, 1], [0, -1], // Rook directions
         [1, 1], [1, -1], [-1, 1], [-1, -1] // Bishop directions
@@ -235,10 +226,9 @@ function getQueenMoves(square, boardSquares, _pieceColor) {
  * Gets possible moves for a king.
  * @param {object} square - The current square.
  * @param {Array} boardSquares - The current board squares.
- * @param {string} _pieceColor - The color of the piece.
  * @returns {Array} - The possible moves array.
  */
-function getKingMoves(square, boardSquares, _pieceColor) {
+function getKingMoves(square, boardSquares) {
     const directions = [
         [1, 0], [-1, 0], [0, 1], [0, -1],
         [1, 1], [1, -1], [-1, 1], [-1, -1]
@@ -246,7 +236,7 @@ function getKingMoves(square, boardSquares, _pieceColor) {
 
     const moves = getMovesForOffsets(square, boardSquares, directions);
 
-    const color = _pieceColor(square);
+    const color = HelperMethods.getPieceColor(square);
 
     // Castling logic
     const castlingMoves = getCastlingMoves(square, color, boardSquares);
@@ -268,23 +258,15 @@ function getCastlingMoves(square, color, boardSquares) {
     const longCastleSquare = HelperMethods.getATargetSquareByLocation(square.props.x, square.props.y - 2, boardSquares);
     const shortCastleSquare = HelperMethods.getATargetSquareByLocation(square.props.x, square.props.y + 2, boardSquares);
 
-    const castlingChecks = {
-        [color.WHITE]: {
-            long: checkIfCanWhiteLongCastle,
-            short: checkIfCanWhiteShortCastle,
-        },
-        [color.BLACK]: {
-            long: checkIfCanBlackLongCastle,
-            short: checkIfCanBlackShortCastle,
-        }
-    };
+    const isWhite = HelperMethods.isColorWhite(color);
 
-    const checkFunctions = castlingChecks[color];
-
-    if (checkFunctions.long()) {
+    // Check and add long castling move
+    if (HelperMethods.isCastlingPossible(GlobalVariables.CASTLING_TYPES.LONG, isWhite)) {
         moves.push(longCastleSquare);
     }
-    if (checkFunctions.short()) {
+
+    // Check and add short castling move
+    if (HelperMethods.isCastlingPossible(GlobalVariables.CASTLING_TYPES.SHORT, isWhite)) {
         moves.push(shortCastleSquare);
     }
 
@@ -294,28 +276,30 @@ function getCastlingMoves(square, color, boardSquares) {
 /**
  * Filters out moves that do not deal with a check.
  * @param {Array} possibleMoves - The array of possible moves.
+ * @param {Array} boardSquares - The board squares array.
  * @returns {Array} - The filtered array of possible moves.
  */
-export function filterMovesIfInCheck(possibleMoves) {
-    const blackKing = HelperMethods.getATargetSquareByPiece(GlobalVariables.KINGS.BLACK_KING, boardSquaresRef.current);
-    const whiteKing = HelperMethods.getATargetSquareByPiece(GlobalVariables.KINGS.WHITE_KING, boardSquaresRef.current);
+export function filterMovesIfInCheck(possibleMoves, boardSquares) {
+    const blackKing = HelperMethods.getATargetSquareByPiece(GlobalVariables.KINGS.BLACK_KING, boardSquares);
+    const whiteKing = HelperMethods.getATargetSquareByPiece(GlobalVariables.KINGS.WHITE_KING, boardSquares);
+    const king = GlobalVariables.IsWhiteToMove ? whiteKing : blackKing
 
     const isKingInCheck = (king, move, piece) => {
-        const pseudoMove = { x: king.props.x, y: king.props.y, piece: "" };
+        const pseudoMove = <Square x={king.props.x} y={king.props.y} piece={GlobalVariables.EMPTY_STRING} />
         if (piece === GlobalVariables.KINGS.BLACK_KING) {
-            return HelperMethods.isBlackInCheck(move, pseudoMove);
+            return HelperMethods.isBlackInCheck(piece, move, pseudoMove, boardSquares);
         } else if (piece === GlobalVariables.KINGS.WHITE_KING) {
-            return HelperMethods.isWhiteInCheck(move, pseudoMove);
+            return HelperMethods.isWhiteInCheck(piece, move, pseudoMove, boardSquares);
         } else {
-            return (GlobalVariables.IsWhiteToMove && HelperMethods.isWhiteInCheck(whiteKing, move, piece)) ||
-                (!GlobalVariables.IsWhiteToMove && HelperMethods.isBlackInCheck(blackKing, move, piece));
+            return (GlobalVariables.IsWhiteToMove && HelperMethods.isWhiteInCheck(whiteKing, move, pseudoMove, boardSquares)) ||
+                (!GlobalVariables.IsWhiteToMove && HelperMethods.isBlackInCheck(blackKing, move, pseudoMove, boardSquares));
         }
     };
 
     const filterMoves = (moves, piece) => {
         return moves.filter(move => {
             const moveSquare = <Square x={move.props.x} y={move.props.y} piece={piece} />;
-            return !isKingInCheck(piece, moveSquare, piece);
+            return !isKingInCheck(king, moveSquare, null, boardSquares);
         });
     };
 
@@ -328,14 +312,15 @@ export function filterMovesIfInCheck(possibleMoves) {
 /**
  * Filters out moves that allow illegal castling (castling through check).
  * @param {Array} possibleMoves - The array of possible moves.
+ * @param {Array} boardSquares - The board squares array.
  * @returns {Array} - The filtered array of possible moves.
  */
-export function filterMovesThatAllowIllegalCastling(possibleMoves) {
-    const blackKing = HelperMethods.getATargetSquareByPiece(GlobalVariables.KINGS.BLACK_KING, boardSquaresRef.current);
-    const whiteKing = HelperMethods.getATargetSquareByPiece(GlobalVariables.KINGS.WHITE_KING, boardSquaresRef.current);
+export function filterMovesThatAllowIllegalCastling(possibleMoves, boardSquares) {
+    const blackKing = HelperMethods.getATargetSquareByPiece(GlobalVariables.KINGS.BLACK_KING, boardSquares);
+    const whiteKing = HelperMethods.getATargetSquareByPiece(GlobalVariables.KINGS.WHITE_KING, boardSquares);
 
     const removeCastlingMove = (moves, x, y) => {
-        const index = moves.findIndex(m => m.props.x === x && m.props.y === y);
+        const index = moves.findIndex(m => HelperMethods.isSquareOnRow(m, x) && HelperMethods.isSquareOnColumn(m, y));
         if (index !== -1) {
             moves.splice(index, 1);
         }
@@ -356,29 +341,37 @@ export function filterMovesThatAllowIllegalCastling(possibleMoves) {
         const piece = moveSet.piece;
         const moves = moveSet.moves;
 
-        const whiteCastle1 = moves.find(m => m.props.x === 7 && m.props.y === 6);
-        const whiteCastle2 = moves.find(m => m.props.x === 7 && m.props.y === 2);
-        const blackCastle1 = moves.find(m => m.props.x === 0 && m.props.y === 6);
-        const blackCastle2 = moves.find(m => m.props.x === 0 && m.props.y === 2);
+        const whiteCastle1 = moves.find(m => HelperMethods.isSquareOnRow(m, GlobalVariables.CASTLE_ROW_WHITE) &&
+            HelperMethods.isSquareOnColumn(m, GlobalVariables.CASTLE_KING_FINAL_COL_SHORT));
+        const whiteCastle2 = moves.find(m => HelperMethods.isSquareOnRow(m, GlobalVariables.CASTLE_ROW_WHITE) &&
+            HelperMethods.isSquareOnColumn(m, GlobalVariables.CASTLE_KING_FINAL_COL_LONG));
+        const blackCastle1 = moves.find(m => HelperMethods.isSquareOnRow(m, GlobalVariables.CASTLE_ROW_BLACK) &&
+            HelperMethods.isSquareOnColumn(m, GlobalVariables.CASTLE_KING_FINAL_COL_SHORT));
+        const blackCastle2 = moves.find(m => HelperMethods.isSquareOnRow(m, GlobalVariables.CASTLE_ROW_BLACK) &&
+            HelperMethods.isSquareOnColumn(m, GlobalVariables.CASTLE_KING_FINAL_COL_LONG));
 
         if (piece === blackKing || piece === whiteKing) {
             isIllegalCastling(moveSet, whiteCastle1, whiteCastle2,
-                moves.find(m => m.props.x === 7 && m.props.y === 5),
-                moves.find(m => m.props.x === 7 && m.props.y === 3));
+                moves.find(m => HelperMethods.isSquareOnRow(m, GlobalVariables.CASTLE_ROW_WHITE) &&
+                    HelperMethods.isSquareOnColumn(m, GlobalVariables.CASTLE_ROOK_FINAL_COL_SHORT)),
+                moves.find(m => HelperMethods.isSquareOnRow(m, GlobalVariables.CASTLE_ROW_WHITE) &&
+                    HelperMethods.isSquareOnColumn(m, GlobalVariables.CASTLE_ROOK_FINAL_COL_LONG)));
 
             isIllegalCastling(moveSet, blackCastle1, blackCastle2,
-                moves.find(m => m.props.x === 0 && m.props.y === 5),
-                moves.find(m => m.props.x === 0 && m.props.y === 3));
+                moves.find(m => HelperMethods.isSquareOnRow(m, GlobalVariables.CASTLE_ROW_BLACK) &&
+                    HelperMethods.isSquareOnColumn(m, GlobalVariables.CASTLE_ROOK_FINAL_COL_SHORT)),
+                moves.find(m => HelperMethods.isSquareOnRow(m, GlobalVariables.CASTLE_ROW_BLACK) &&
+                    HelperMethods.isSquareOnColumn(m, GlobalVariables.CASTLE_ROOK_FINAL_COL_LONG)));
         }
 
-        if (piece === blackKing && HelperMethods.isBlackInCheck(blackKing)) {
-            removeCastlingMove(moves, 0, 6);
-            removeCastlingMove(moves, 0, 2);
+        if (piece === blackKing && HelperMethods.isBlackInCheck(blackKing, piece, null, boardSquares)) {
+            removeCastlingMove(moves, GlobalVariables.CASTLE_ROW_BLACK, GlobalVariables.CASTLE_KING_FINAL_COL_SHORT);
+            removeCastlingMove(moves, GlobalVariables.CASTLE_ROW_BLACK, GlobalVariables.CASTLE_KING_FINAL_COL_LONG);
         }
 
-        if (piece === whiteKing && HelperMethods.isWhiteInCheck(whiteKing)) {
-            removeCastlingMove(moves, 7, 6);
-            removeCastlingMove(moves, 7, 2);
+        if (piece === whiteKing && HelperMethods.isWhiteInCheck(whiteKing, piece, null, boardSquares)) {
+            removeCastlingMove(moves, GlobalVariables.CASTLE_ROW_WHITE, GlobalVariables.CASTLE_KING_FINAL_COL_SHORT);
+            removeCastlingMove(moves, GlobalVariables.CASTLE_ROW_WHITE, GlobalVariables.CASTLE_KING_FINAL_COL_LONG);
         }
 
         return moveSet;
