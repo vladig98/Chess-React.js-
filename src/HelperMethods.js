@@ -789,3 +789,125 @@ export function isPawn(square) {
 export function isKnight(square) {
     return doesTheSquareHasThePiece(square, GlobalVariables.PIECES.KNIGHT);
 }
+
+/**
+ * Converts the first character of a string to uppercase and the rest to lowercase.
+ * @param {string} value - The string to convert.
+ * @returns {string} - The converted string with the first character in uppercase and the rest in lowercase.
+ */
+export function turnSentenceCase(value) {
+    if (typeof value !== 'string' || value.trim().length === 0) {
+        return GlobalVariables.EMPTY_STRING;
+    }
+    const trimmedValue = value.trim();
+    return trimmedValue.charAt(0).toUpperCase() + trimmedValue.slice(1).toLowerCase();
+}
+
+/**
+ * Disables castling rights if the king or a rook moves.
+ * @param {object} square - The square containing the piece that moved.
+ */
+export function disableCastlingIfKingOrRookMoves(square) {
+    const color = getPieceColor(square);
+    const piece = getPiece(square);
+    const isWhite = isColorWhite(color);
+
+    const updateCastlingRights = (color, type, value) => {
+        const castle = 'Castle';
+        const normalizedType = turnSentenceCase(type)
+        GlobalVariables.CastlingRights[`${color}${normalizedType}${castle}`] = value;
+    };
+
+    if (piece === GlobalVariables.PIECES.KING) {
+        const castleColor = isWhite ? GlobalVariables.COLORS.WHITE : GlobalVariables.COLORS.BLACK;
+        updateCastlingRights(castleColor, GlobalVariables.CASTLING_TYPES.LONG, false);
+        updateCastlingRights(castleColor, GlobalVariables.CASTLING_TYPES.SHORT, false);
+    }
+
+    if (piece === GlobalVariables.PIECES.ROOK) {
+        const { x, y } = square.props;
+
+        const isRookInStartingPosition = (row, col, type, color) => {
+            return x === row && y === col && updateCastlingRights(color, type, false);
+        };
+
+        isRookInStartingPosition(GlobalVariables.CASTLE_ROW_WHITE, GlobalVariables.CASTLE_ROOK_INITIAL_COL_SHORT, GlobalVariables.CASTLING_TYPES.SHORT, GlobalVariables.COLORS.WHITE);
+        isRookInStartingPosition(GlobalVariables.CASTLE_ROW_BLACK, GlobalVariables.CASTLE_ROOK_INITIAL_COL_SHORT, GlobalVariables.CASTLING_TYPES.SHORT, GlobalVariables.COLORS.BLACK);
+        isRookInStartingPosition(GlobalVariables.CASTLE_ROW_WHITE, GlobalVariables.CASTLE_ROOK_INITIAL_COL_LONG, GlobalVariables.CASTLING_TYPES.LONG, GlobalVariables.COLORS.WHITE);
+        isRookInStartingPosition(GlobalVariables.CASTLE_ROW_BLACK, GlobalVariables.CASTLE_ROOK_INITIAL_COL_LONG, GlobalVariables.CASTLING_TYPES.LONG, GlobalVariables.COLORS.BLACK);
+    }
+}
+
+/**
+ * Enables or disables en passant based on the move.
+ * @param {object} square - The square containing the piece that moved.
+ * @param {object} targetSquare - The square to which the piece is moving.
+ */
+export function enableEnPassant(square, targetSquare) {
+    const color = getPieceColor(square);
+    const isWhite = isColorWhite(color);
+    const offset = isWhite ? -1 : 1;
+    const isPawn = isPawn(square);
+    const isTwoSquareMove = Math.abs(square.props.x - targetSquare.props.x) === 2;
+
+    const updateEnPassant = (isPossible, x, y) => {
+        GlobalVariables.EnPassant.isPossible = isPossible;
+        GlobalVariables.EnPassant.x = x;
+        GlobalVariables.EnPassant.y = y;
+    };
+
+    if (isPawn && isTwoSquareMove) {
+        updateEnPassant(true, square.props.x + offset, square.props.y);
+    } else {
+        updateEnPassant(false, -1, -1);
+    }
+}
+
+/**
+ * Handles en passant capture logic.
+ * @param {object} square - The square containing the piece that moved.
+ * @param {object} targetSquare - The square to which the piece is moving.
+ * @returns {Array} - The updated board position after en passant capture.
+ */
+export function captureEnPassant(square, targetSquare) {
+    const color = getPieceColor(square);
+    const isWhite = isColorWhite(color);
+    const offset = isWhite ? 1 : -1;
+    const { isPossible } = GlobalVariables.EnPassant;
+
+    const enPassantCapture = (square, enPassantTargetSquare) => {
+        const emptySquare = <Square x={square.props.x} y={square.props.y} piece={""} />;
+        return HelperMethods.updateBoardPosition(emptySquare, enPassantTargetSquare);
+    };
+
+    if (isPossible) {
+        const enPassantTargetSquare = HelperMethods.getATargetSquareByLocation(targetSquare.props.x + offset, targetSquare.props.y);
+        return enPassantCapture(square, enPassantTargetSquare);
+    }
+
+    return [];
+}
+
+/**
+ * Updates the global board state with the new position.
+ * @param {Array} updatedPosition - The updated board position after the move.
+ */
+export function updateBoardState(updatedPosition) {
+    const newPosition = updatedPosition.map(row => [...row]);
+    GlobalVariables.BoardPosition.splice(0, GlobalVariables.BoardPosition.length, ...newPosition);
+}
+
+/**
+ * Updates the move counters for the game.
+ */
+export function updateMoveCounters() {
+    GlobalVariables.updateFullMoves(GlobalVariables.FullMoves + 1);
+}
+
+/**
+ * Resets the possible moves array and toggles the player's turn.
+ */
+export function resetPossibleMovesAndToggleTurn() {
+    GlobalVariables.PossibleMoves.splice(0, GlobalVariables.PossibleMoves.length);
+    GlobalVariables.updateIsWhiteToMove(!GlobalVariables.IsWhiteToMove);
+}

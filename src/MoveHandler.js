@@ -391,3 +391,35 @@ export function removeEmptyMoves(possibleMoves) {
         moves: moveSet.moves.filter(move => move)
     }));
 }
+
+/**
+ * Determines if a move is allowed based on the current player's turn.
+ * @param {string} color - The color of the piece.
+ * @returns {boolean} - True if the move is allowed, false otherwise.
+ */
+export function isMoveAllowed(color) {
+    return (HelperMethods.isColorWhite(color) && GlobalVariables.IsWhiteToMove) ||
+        (HelperMethods.isColorBlack(color) && !GlobalVariables.IsWhiteToMove);
+}
+
+/**
+ * Collects possible moves for a given square.
+ * @param {object} square - The square to collect moves for.
+ * @param {Array} squares - The current board squares.
+ * @returns {Array} - The possible moves for the piece on the square.
+ */
+export function collectPossibleMoves(square, squares) {
+    let possiblePieceMoves = getAllPossibleMoves(square, squares);
+    possiblePieceMoves = removeEmptyMoves(possiblePieceMoves);
+    possiblePieceMoves = filterMovesIfInCheck(possiblePieceMoves, squares);
+    possiblePieceMoves = filterMovesThatAllowIllegalCastling(possiblePieceMoves, squares);
+    return possiblePieceMoves;
+}
+
+/**
+ * Updates the global possible moves array.
+ * @param {Array} possiblePieceMoves - The possible moves to update.
+ */
+export function updatePossibleMoves(possiblePieceMoves) {
+    GlobalVariables.PossibleMoves.splice(0, GlobalVariables.PossibleMoves.length, ...possiblePieceMoves);
+}
