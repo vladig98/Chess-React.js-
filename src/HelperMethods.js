@@ -400,7 +400,7 @@ export function canWeCastle() {
  * @returns {Array} - The updated row.
  */
 export function handleSquareAndTargetSquareOnTheSameRow(currentSquare, targetSquare, row) {
-    if (isKing(currentSquare) && canWeCastle()) {
+    if (isKing(currentSquare) && canWeCastle() && Math.abs(currentSquare.props.y - targetSquare.props.y) == 2) {
         return handleCastling(currentSquare, row);
     }
     return SidewaysCapture(row, Number(currentSquare.props.y), Number(targetSquare.props.y), currentSquare.props.piece);
@@ -716,44 +716,17 @@ export function convertLocationToCoordinates(x, y) {
 /**
  * Determines if the king is in check.
  * @param {object} kingSquare - The square where the king is located.
- * @param {object} [pseudo] - The square where a piece is hypothetically moved.
- * @param {object} [currentSquare=null] - The square of the piece being moved.
- * @param {string} color - The color of the king ('white' or 'black').
  * @param {array} boardSquares - The board squares array.
  * @returns {boolean} - True if the king is in check, false otherwise.
  */
-export function isKingInCheck(kingSquare, pseudo, currentSquare = null, color, boardSquares) {
-    const squares = boardSquares;
+export function isKingInCheck(kingSquare, boardSquares) {
+    const squares = boardSquares
+    const color = getPieceColor(kingSquare)
 
-    const updatedSquares = squares.map(s => {
-        if (pseudo && compareIfTwoSquaresAreTheSame(s, pseudo)) {
-            return React.cloneElement(s, { piece: pseudo.props.piece });
-        } else if (currentSquare && compareIfTwoSquaresAreTheSame(s, currentSquare)) {
-            return React.cloneElement(s, { piece: GlobalVariables.EMPTY_STRING });
-        } else {
-            return s;
-        }
-    });
-
-    const checkDirections = (directions) => {
-        for (const [dx, dy] of directions) {
-            for (let i = 1; i < GlobalVariables.DIM; i++) {
-                const piece = updatedSquares.find(s => isSquareOnRow(s, kingSquare.props.x + dx * i) && isSquareOnColumn(s, kingSquare.props.y + dy * i));
-                if (!piece) break;
-                const [pieceColor, pieceType] = piece.props.piece.split(GlobalVariables.PIECE_DELIMITER);
-                if (pieceColor !== color) {
-                    if (pieceType === GlobalVariables.PIECES.QUEEN || pieceType === GlobalVariables.PIECES.ROOK ||
-                        pieceType === GlobalVariables.PIECES.BISHOP || (i === 1 && pieceType === GlobalVariables.PIECES.PAWN && (dx === -1 || dx === 1))) {
-                        return true;
-                    }
-                    if (piece.props.piece) break;
-                } else {
-                    break;
-                }
-            }
-        }
-        return false;
-    };
+    const knightMoves = [
+        [-2, -1], [-2, 1], [2, -1], [2, 1],
+        [-1, 2], [1, 2], [-1, -2], [1, -2]
+    ];
 
     const linearDirections = [
         [1, 0], [-1, 0], [0, 1], [0, -1]  // Right, Left, Up, Down
@@ -763,17 +736,59 @@ export function isKingInCheck(kingSquare, pseudo, currentSquare = null, color, b
         [1, 1], [-1, -1], [1, -1], [-1, 1]  // Diagonals
     ];
 
+    const checkDirections = (directions) => {
+        for (const [dx, dy] of directions) {
+            //only a queen and a bishop can check diagonally (+ a pawn)
+            //only a queen and a rook can check linearly
+            const piecesTypes = Math.abs(dx) == Math.abs(dy) ?
+                [GlobalVariables.PIECES.QUEEN, GlobalVariables.PIECES.BISHOP] :
+                [GlobalVariables.PIECES.QUEEN, GlobalVariables.PIECES.ROOK]
+
+            for (let i = 1; i < GlobalVariables.DIM; i++) {
+                // Get the king and the square that is offset by the given distance
+                const piece = getATargetSquareByLocation(kingSquare?.props.x + dx * i, kingSquare?.props.y + dy * i, squares)
+
+                // Don't check anything if we go out of bounds
+                if (!piece) {
+                    break;
+                }
+
+                // Get the square data (color and piece type)
+                const pieceColor = getPieceColor(piece);
+                const pieceType = getPiece(piece);
+
+                // Move to the next square if this one is empty
+                if (!pieceType) {
+                    continue;
+                }
+
+                // If the piece is the same color, it can't give us a check, so break
+                if (pieceColor === color) {
+                    break;
+                }
+
+                // Check if the piece is a queen, rook, or bishop,
+                // or if it's a pawn and we are exactly 1 square away (pawns can't check from more than 1 square away)
+                if (piecesTypes.includes(pieceType) || (pieceType == GlobalVariables.PIECES.PAWN && i === 1 && (dx === -1 || dx === 1))) {
+                    return true;
+                }
+
+                return false;
+            }
+        }
+        return false;
+    };
+
     if (checkDirections(linearDirections) || checkDirections(diagonalDirections)) {
         return true;
     }
 
-    const knightMoves = [
-        [-2, -1], [-2, 1], [2, -1], [2, 1],
-        [-1, 2], [1, 2], [-1, -2], [1, -2]
-    ];
-
     for (const [dx, dy] of knightMoves) {
-        const piece = updatedSquares.find(s => isSquareOnRow(s, kingSquare.props.x + dx) && isSquareOnColumn(s, kingSquare.props.y + dy));
+        const piece = squares.find(s => isSquareOnRow(s, kingSquare.props.x + dx) && isSquareOnColumn(s, kingSquare.props.y + dy));
+
+        // If we're not out of bounds
+        // If the the piece is a different color than the king
+        // If the piece is a knight
         if (piece && getPieceColor(piece) !== color && getPiece(piece) === GlobalVariables.PIECES.KNIGHT) {
             return true;
         }
@@ -783,27 +798,32 @@ export function isKingInCheck(kingSquare, pseudo, currentSquare = null, color, b
 }
 
 /**
- * Determines if the white king is in check.
- * @param {object} kingSquare - The square where the king is located.
- * @param {object} [pseudo] - The square where a piece is hypothetically moved.
- * @param {object} [currentSquare=null] - The square of the piece being moved.
- * @param {array} boardSquares - The board squares array.
- * @returns {boolean} - True if the white king is in check, false otherwise.
+ * Determines if a move is legal by checking if the king would be in check after the move.
+ * 
+ * @param {object} kingSquare - The square where the king is currently located.
+ * @param {Array} boardSquares - The current state of the board as an array of squares.
+ * @param {object} currentPiece - The piece that is being moved.
+ * @param {object} targetLocation - The square where the piece is being moved to.
+ * 
+ * @returns {boolean} - True if the move is legal (i.e., does not put the king in check), false otherwise.
  */
-export function isWhiteInCheck(kingSquare, pseudo, currentSquare = null, boardSquares) {
-    return isKingInCheck(kingSquare, pseudo, currentSquare, GlobalVariables.COLORS.WHITE, boardSquares);
-}
+export function isMoveLegal(kingSquare, boardSquares, currentPiece, targetLocation) {
+    const squares = boardSquares;
 
-/**
- * Determines if the black king is in check.
- * @param {object} kingSquare - The square where the king is located.
- * @param {object} [pseudo] - The square where a piece is hypothetically moved.
- * @param {object} [currentSquare=null] - The square of the piece being moved.
- * @param {array} boardSquares - The board squares array.
- * @returns {boolean} - True if the black king is in check, false otherwise.
- */
-export function isBlackInCheck(kingSquare, pseudo, currentSquare = null, boardSquares) {
-    return isKingInCheck(kingSquare, pseudo, currentSquare, GlobalVariables.COLORS.BLACK, boardSquares);
+    const updatedSquares = squares.map(s => {
+        if (currentPiece && compareIfTwoSquaresAreTheSame(s, currentPiece)) {
+            return React.cloneElement(s, { piece: GlobalVariables.EMPTY_STRING });
+        } else if (targetLocation && compareIfTwoSquaresAreTheSame(s, targetLocation)) {
+            return React.cloneElement(s, { piece: currentPiece.props.piece });
+        } else {
+            return s;
+        }
+    });
+
+    // Handles legal moves for the king
+    const king = compareIfTwoSquaresAreTheSame(kingSquare, currentPiece) ? getATargetSquareByLocation(targetLocation.props.x, targetLocation.props.y, updatedSquares) : kingSquare
+
+    return !isKingInCheck(king, updatedSquares)
 }
 
 /**

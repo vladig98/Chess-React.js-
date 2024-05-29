@@ -274,7 +274,6 @@ function getCastlingMoves(square, color, boardSquares) {
     return moves;
 }
 
-//TODO: FIX IT. MAKE IT WORK
 /**
  * Filters out moves that do not deal with a check.
  * @param {Array} possibleMoves - The array of possible moves.
@@ -286,32 +285,18 @@ export function filterMovesIfInCheck(possibleMoves, boardSquares) {
     const whiteKing = HelperMethods.getATargetSquareByPiece(GlobalVariables.KINGS.WHITE_KING, boardSquares);
     const king = GlobalVariables.IsWhiteToMove ? whiteKing : blackKing
 
-    const isKingInCheck = (king, move, piece) => {
-        const pseudoMove = <Square x={king.props.x} y={king.props.y} piece={GlobalVariables.EMPTY_STRING} />
-        if (piece === GlobalVariables.KINGS.BLACK_KING) {
-            return HelperMethods.isBlackInCheck(piece, move, pseudoMove, boardSquares);
-        } else if (piece === GlobalVariables.KINGS.WHITE_KING) {
-            return HelperMethods.isWhiteInCheck(piece, move, pseudoMove, boardSquares);
-        } else {
-            return (GlobalVariables.IsWhiteToMove && HelperMethods.isWhiteInCheck(whiteKing, move, pseudoMove, boardSquares)) ||
-                (!GlobalVariables.IsWhiteToMove && HelperMethods.isBlackInCheck(blackKing, move, pseudoMove, boardSquares));
-        }
-    };
-
     const filterMoves = (moves, piece) => {
         return moves.filter(move => {
-            const moveSquare = <Square x={move.props.x} y={move.props.y} piece={piece} />;
-            return !isKingInCheck(king, moveSquare, null, boardSquares);
+            return HelperMethods.isMoveLegal(king, boardSquares, piece, move)
         });
     };
 
     return possibleMoves.map(moveSet => {
-        const filteredMoves = filterMoves(moveSet.moves, moveSet.piece.props.piece);
+        const filteredMoves = filterMoves(moveSet.moves, moveSet.piece);
         return { ...moveSet, moves: filteredMoves };
     });
 }
 
-//TODO: FIX IT. MAKE IT WORK
 /**
  * Filters out moves that allow illegal castling (castling through check).
  * @param {Array} possibleMoves - The array of possible moves.
@@ -321,21 +306,26 @@ export function filterMovesIfInCheck(possibleMoves, boardSquares) {
 export function filterMovesThatAllowIllegalCastling(possibleMoves, boardSquares) {
     const blackKing = HelperMethods.getATargetSquareByPiece(GlobalVariables.KINGS.BLACK_KING, boardSquares);
     const whiteKing = HelperMethods.getATargetSquareByPiece(GlobalVariables.KINGS.WHITE_KING, boardSquares);
+    const king = GlobalVariables.IsWhiteToMove ? whiteKing : blackKing
+    const castleRow = GlobalVariables.IsWhiteToMove ? GlobalVariables.CASTLE_ROW_WHITE : GlobalVariables.CASTLE_ROW_BLACK
 
     const removeCastlingMove = (moves, x, y) => {
+        //get the index of the move
         const index = moves.findIndex(m => HelperMethods.isSquareOnRow(m, x) && HelperMethods.isSquareOnColumn(m, y));
+
+        //remove the move if it exists
         if (index !== -1) {
             moves.splice(index, 1);
         }
     };
 
-    const isIllegalCastling = (king, castle1, castle2, across1, across2) => {
-        if (king && (castle1 || castle2)) {
-            if (castle1 && !across1) {
-                removeCastlingMove(king.moves, castle1.props.x, castle1.props.y);
+    const isIllegalCastling = (king, shortCastle, longCastle, acrossShort, acrossLong) => {
+        if (king && (shortCastle || longCastle)) {
+            if (shortCastle && acrossShort && acrossShort.props.piece) {
+                removeCastlingMove(king.moves, shortCastle.props.x, shortCastle.props.y);
             }
-            if (castle2 && !across2) {
-                removeCastlingMove(king.moves, castle2.props.x, castle2.props.y);
+            if (longCastle && acrossLong && acrossLong.props.piece) {
+                removeCastlingMove(king.moves, longCastle.props.x, longCastle.props.y);
             }
         }
     };
@@ -344,37 +334,20 @@ export function filterMovesThatAllowIllegalCastling(possibleMoves, boardSquares)
         const piece = moveSet.piece;
         const moves = moveSet.moves;
 
-        const whiteCastle1 = moves.find(m => HelperMethods.isSquareOnRow(m, GlobalVariables.CASTLE_ROW_WHITE) &&
-            HelperMethods.isSquareOnColumn(m, GlobalVariables.CASTLE_KING_FINAL_COL_SHORT));
-        const whiteCastle2 = moves.find(m => HelperMethods.isSquareOnRow(m, GlobalVariables.CASTLE_ROW_WHITE) &&
-            HelperMethods.isSquareOnColumn(m, GlobalVariables.CASTLE_KING_FINAL_COL_LONG));
-        const blackCastle1 = moves.find(m => HelperMethods.isSquareOnRow(m, GlobalVariables.CASTLE_ROW_BLACK) &&
-            HelperMethods.isSquareOnColumn(m, GlobalVariables.CASTLE_KING_FINAL_COL_SHORT));
-        const blackCastle2 = moves.find(m => HelperMethods.isSquareOnRow(m, GlobalVariables.CASTLE_ROW_BLACK) &&
-            HelperMethods.isSquareOnColumn(m, GlobalVariables.CASTLE_KING_FINAL_COL_LONG));
+        //get the squares where the king will end up after castling
+        const shortCastle = HelperMethods.getATargetSquareByLocation(castleRow, GlobalVariables.CASTLE_KING_FINAL_COL_SHORT, moves)
+        const longCastle = HelperMethods.getATargetSquareByLocation(castleRow, GlobalVariables.CASTLE_KING_FINAL_COL_LONG, moves)
 
-        if (piece === blackKing || piece === whiteKing) {
-            isIllegalCastling(moveSet, whiteCastle1, whiteCastle2,
-                moves.find(m => HelperMethods.isSquareOnRow(m, GlobalVariables.CASTLE_ROW_WHITE) &&
-                    HelperMethods.isSquareOnColumn(m, GlobalVariables.CASTLE_ROOK_FINAL_COL_SHORT)),
-                moves.find(m => HelperMethods.isSquareOnRow(m, GlobalVariables.CASTLE_ROW_WHITE) &&
-                    HelperMethods.isSquareOnColumn(m, GlobalVariables.CASTLE_ROOK_FINAL_COL_LONG)));
+        if (HelperMethods.compareIfTwoSquaresAreTheSame(piece, king)) {
+            if (HelperMethods.isKingInCheck(king, boardSquares)) {
+                removeCastlingMove(moves, castleRow, GlobalVariables.CASTLE_KING_FINAL_COL_SHORT);
+                removeCastlingMove(moves, castleRow, GlobalVariables.CASTLE_KING_FINAL_COL_LONG);
+            }
 
-            isIllegalCastling(moveSet, blackCastle1, blackCastle2,
-                moves.find(m => HelperMethods.isSquareOnRow(m, GlobalVariables.CASTLE_ROW_BLACK) &&
-                    HelperMethods.isSquareOnColumn(m, GlobalVariables.CASTLE_ROOK_FINAL_COL_SHORT)),
-                moves.find(m => HelperMethods.isSquareOnRow(m, GlobalVariables.CASTLE_ROW_BLACK) &&
-                    HelperMethods.isSquareOnColumn(m, GlobalVariables.CASTLE_ROOK_FINAL_COL_LONG)));
-        }
+            const acrossShort = HelperMethods.getATargetSquareByLocation(castleRow, GlobalVariables.CASTLE_ROOK_FINAL_COL_SHORT, moves)
+            const acrossLong = HelperMethods.getATargetSquareByLocation(castleRow, GlobalVariables.CASTLE_ROOK_FINAL_COL_LONG, moves)
 
-        if (piece === blackKing && HelperMethods.isBlackInCheck(blackKing, piece, null, boardSquares)) {
-            removeCastlingMove(moves, GlobalVariables.CASTLE_ROW_BLACK, GlobalVariables.CASTLE_KING_FINAL_COL_SHORT);
-            removeCastlingMove(moves, GlobalVariables.CASTLE_ROW_BLACK, GlobalVariables.CASTLE_KING_FINAL_COL_LONG);
-        }
-
-        if (piece === whiteKing && HelperMethods.isWhiteInCheck(whiteKing, piece, null, boardSquares)) {
-            removeCastlingMove(moves, GlobalVariables.CASTLE_ROW_WHITE, GlobalVariables.CASTLE_KING_FINAL_COL_SHORT);
-            removeCastlingMove(moves, GlobalVariables.CASTLE_ROW_WHITE, GlobalVariables.CASTLE_KING_FINAL_COL_LONG);
+            isIllegalCastling(moveSet, shortCastle, longCastle, acrossShort, acrossLong);
         }
 
         return moveSet;
