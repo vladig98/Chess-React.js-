@@ -3,10 +3,6 @@ import * as HelperMethods from "./HelperMethods.js";
 import * as GlobalVariables from "./globalVariables.js"
 import * as MoveHandling from './MoveHandler.js'
 
-//TODO: Fix the issue with calculating/filtering possible moves. You're not getting the right number
-//TODO: Fix the king having no moves when in check
-//TODD: Fix the castle in check double kings issue
-//TODO: Fix number of possible moves when there is a pinned piece to the king (if you move, you're in check) click on the pinned piece (shows less moves) click on other pieces (counts illegal moves)
 /**
  * FEN -> possibleMoves count (Italian game)
  * rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 -> 20
@@ -86,7 +82,7 @@ function Board() {
      * 'r1bqk2r/pppp1ppp/2n2n2/2b5/2BPP3/5N2/PP3PPP/RNBQK2R b KQkq - 0 6'
      * 'r1b5/p1p3k1/2pp1r1p/6pB/3P4/8/P4PPP/Q1B3K1 b - - 0 21'
      */
-    const [fen, setFen] = useState('r1b2k1r/ppp1q3/2np2Np/6pB/3P4/1Q6/P4PPP/b1B3K1 b - - 1 17');
+    const [fen, setFen] = useState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
 
     /**
      * State to manage possible moves for a piece. 

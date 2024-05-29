@@ -737,6 +737,7 @@ export function isKingInCheck(kingSquare, boardSquares) {
     ];
 
     const checkDirections = (directions) => {
+        let isInCheck = false;
         for (const [dx, dy] of directions) {
             //only a queen and a bishop can check diagonally (+ a pawn)
             //only a queen and a rook can check linearly
@@ -773,10 +774,11 @@ export function isKingInCheck(kingSquare, boardSquares) {
                     return true;
                 }
 
-                return false;
+                isInCheck = false;
+                break;
             }
         }
-        return false;
+        return isInCheck;
     };
 
     if (checkDirections(linearDirections) || checkDirections(diagonalDirections)) {
