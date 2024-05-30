@@ -277,6 +277,7 @@ export function checkIfAMoveIsEqualToTheCurrentSelectedSquare(move) {
  * @returns {boolean} - True if the squares are the same, false otherwise.
  */
 export function compareIfTwoSquaresAreTheSame(square1, square2) {
+    if (!square1 || !square2) return false
     return checkIfTwoSquaresAreOnTheSameRow(square1, square2) && checkIfTwoSquaresAreOnTheSameColumn(square1, square2);
 }
 
@@ -770,7 +771,7 @@ export function isKingInCheck(kingSquare, boardSquares) {
 
                 // Check if the piece is a queen, rook, or bishop,
                 // or if it's a pawn and we are exactly 1 square away (pawns can't check from more than 1 square away)
-                if (piecesTypes.includes(pieceType) || (pieceType == GlobalVariables.PIECES.PAWN && i === 1 && (dx === -1 || dx === 1))) {
+                if (piecesTypes.includes(pieceType) || (pieceType == GlobalVariables.PIECES.PAWN && i === 1 && Math.abs(dx) == Math.abs(dy))) {
                     return true;
                 }
 
@@ -954,10 +955,13 @@ export function captureEnPassant(square, targetSquare, position, squares) {
     const isWhite = isColorWhite(color);
     const offset = isWhite ? 1 : -1;
     const { isPossible } = GlobalVariables.EnPassant;
+    const enPassantTargetSquare = getATargetSquareByLocation(targetSquare.props.x + offset, targetSquare.props.y, squares);
+
+    if (!compareIfTwoSquaresAreTheSame(targetSquare, enPassantTargetSquare)) {
+        return position;
+    }
 
     if (isPossible && areTherePawnsThatCanCaptureEnPassant(square, squares)) {
-        const enPassantTargetSquare = getATargetSquareByLocation(targetSquare.props.x + offset, targetSquare.props.y, squares);
-
         if (enPassantTargetSquare) {
             // Perform en passant capture
             position = updateBoardPosition(square, enPassantTargetSquare);

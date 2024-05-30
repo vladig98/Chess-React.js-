@@ -1,6 +1,5 @@
 import * as GlobalVariables from './globalVariables';
 import * as HelperMethods from './HelperMethods';
-import Square from "./Square.js"
 
 /**
  * Returns all possible moves for a given square based on the piece type.

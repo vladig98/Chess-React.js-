@@ -3,6 +3,7 @@ import * as HelperMethods from "./HelperMethods.js";
 import * as GlobalVariables from "./globalVariables.js"
 import * as MoveHandling from './MoveHandler.js'
 
+//TODO: Fix castling issue -> function disableCastlingIfKingOrRookMoves in HelperMethods
 /**
  * FEN -> possibleMoves count (Italian game)
  * rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 -> 20
