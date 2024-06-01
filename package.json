@@ -6,14 +6,19 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run"
   },
   "dependencies": {
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "react-scripts": "^5.0.0"
+    "@svgr/webpack": "8.1.0",
+    "@testing-library/react": "^15.0.7",
+    "postcss": "^8.4.38",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-scripts": "5.0.1",
+    "resolve-url-loader": "^5.0.0"
   },
-  "devDependencies": {},
   "browserslist": {
     "production": [
       ">0.2%",
@@ -25,5 +30,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.4.5",
+    "cypress": "^13.10.0"
   }
 }
