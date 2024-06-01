@@ -3,12 +3,6 @@ import * as HelperMethods from "./HelperMethods.js";
 import * as GlobalVariables from "./globalVariables.js"
 import * as MoveHandling from './MoveHandler.js'
 
-// Current bugs:
-//TODO: Don't allow the kings to get near one another
-//TODO: Prevent king capturing the other king
-//TODO: Fix En Passant capturing. It's not capturing the enemy pawn, it just moves to the En Passant square
-//TODO: Remove the double move from the Possible Moves array if the king has moved and castling is no longer possible
-//TODO: Prevent castling if the rook has moved
 /**
  * FEN -> possibleMoves count (Italian game)
  * rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 -> 20

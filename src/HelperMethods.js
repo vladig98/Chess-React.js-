@@ -315,9 +315,14 @@ export function isCastlingPossible(castlingType, withWhite = true) {
         [GlobalVariables.CASTLE_ROOK_INITIAL_COL_LONG, GlobalVariables.CASTLE_KING_INITIAL_COL, GlobalVariables.CASTLE_PATH_COLS_LONG] :
         [GlobalVariables.CASTLE_ROOK_INITIAL_COL_SHORT, GlobalVariables.CASTLE_KING_INITIAL_COL, GlobalVariables.CASTLE_PATH_COLS_SHORT];
 
+    const color = withWhite ? GlobalVariables.COLORS.WHITE : GlobalVariables.COLORS.BLACK;
+    const normalizedType = turnSentenceCase(castlingType)
+    const castlingRightProp = `${color}${normalizedType}Castle`
+
     return GlobalVariables.BoardPosition[row][rookCol] === pieces.ROOK &&
         GlobalVariables.BoardPosition[row][kingCol] === pieces.KING &&
-        pathCols.every(col => GlobalVariables.BoardPosition[row][col] === GlobalVariables.EMPTY_SQUARE_PIECE);
+        pathCols.every(col => GlobalVariables.BoardPosition[row][col] === GlobalVariables.EMPTY_SQUARE_PIECE) &&
+        GlobalVariables.CastlingRights[castlingRightProp];
 }
 
 /**
@@ -848,7 +853,6 @@ export function turnSentenceCase(value) {
  */
 export function disableCastlingIfKingOrRookMoves(square) {
     const color = getPieceColor(square);
-    const piece = getPiece(square);
     const isWhite = isColorWhite(color);
 
     const updateCastlingRights = (color, type, value) => {
@@ -857,13 +861,13 @@ export function disableCastlingIfKingOrRookMoves(square) {
         GlobalVariables.CastlingRights[`${color}${normalizedType}${castle}`] = value;
     };
 
-    if (piece === GlobalVariables.PIECES.KING) {
+    if (isKing(square)) {
         const castleColor = isWhite ? GlobalVariables.COLORS.WHITE : GlobalVariables.COLORS.BLACK;
         updateCastlingRights(castleColor, GlobalVariables.CASTLING_TYPES.LONG, false);
         updateCastlingRights(castleColor, GlobalVariables.CASTLING_TYPES.SHORT, false);
     }
 
-    if (piece === GlobalVariables.PIECES.ROOK) {
+    if (isRook(square)) {
         const { x, y } = square.props;
 
         const isRookInStartingPosition = (row, col, type, color) => {
@@ -954,10 +958,11 @@ export function captureEnPassant(square, targetSquare, position, squares) {
     const color = getPieceColor(square);
     const isWhite = isColorWhite(color);
     const offset = isWhite ? 1 : -1;
-    const { isPossible } = GlobalVariables.EnPassant;
+    const { isPossible, x, y } = GlobalVariables.EnPassant;
+    const enPassantSquare = getATargetSquareByLocation(x, y, squares)
     const enPassantTargetSquare = getATargetSquareByLocation(targetSquare.props.x + offset, targetSquare.props.y, squares);
 
-    if (!compareIfTwoSquaresAreTheSame(targetSquare, enPassantTargetSquare)) {
+    if (!compareIfTwoSquaresAreTheSame(targetSquare, enPassantSquare)) {
         return position;
     }
 

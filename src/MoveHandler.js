@@ -32,12 +32,16 @@ export function getAllPossibleMoves(square, boardSquares) {
  */
 function getMovesForOffsets(square, boardSquares, offsets) {
     const moves = [];
+    const color = HelperMethods.getPieceColor(square)
     offsets.forEach(([dx, dy]) => {
         const targetX = square.props.x + dx;
         const targetY = square.props.y + dy;
         const target = HelperMethods.getATargetSquareByLocation(targetX, targetY, boardSquares);
 
         if (target) {
+            if (HelperMethods.isKing(square) && checkIfTargetHasKingAsNeighbor(target, boardSquares, color)) {
+                return
+            }
             if (HelperMethods.isSquareAvailable(target)) {
                 moves.push(target);
             } else if (!HelperMethods.areSameColor(square, target)) {
@@ -46,6 +50,32 @@ function getMovesForOffsets(square, boardSquares, offsets) {
         }
     });
     return moves;
+}
+
+/**
+ * Checks if the target square has a neighboring square occupied by an opponent's king.
+ *
+ * @param {object} target - The target square to check.
+ * @param {Array} boardSquares - The array representing the current state of the board.
+ * @param {string} color - The color of square's piece that's moving.
+ * @returns {boolean} - Returns true if there is a neighboring square occupied by an opponent's king, otherwise false.
+ */
+function checkIfTargetHasKingAsNeighbor(target, boardSquares, color) {
+    const directions = [
+        [1, 0], [-1, 0], [0, 1], [0, -1],
+        [1, 1], [1, -1], [-1, 1], [-1, -1]
+    ];
+
+    for (const [dx, dy] of directions) {
+        const neighborX = target.props.x + dx;
+        const neighborY = target.props.y + dy;
+        const neighbor = HelperMethods.getATargetSquareByLocation(neighborX, neighborY, boardSquares);
+
+        if (neighbor && HelperMethods.isKing(neighbor) && HelperMethods.getPieceColor(neighbor) !== color) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
