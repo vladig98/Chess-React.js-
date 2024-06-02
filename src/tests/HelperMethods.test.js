@@ -1,6 +1,7 @@
 import React from 'react';
 import * as HelperMethods from '../HelperMethods'
 import Square from '../Square'
+import * as GlobalVariables from "../globalVariables.js"
 
 let whitePieces = []
 let blackPieces = []
@@ -31,6 +32,37 @@ const castlingRightsFromFen = 'KQkq'
 const enPassantFromFen = '-'
 const halfMovesFromFen = 0
 const fullMovesFromFen = 1
+const outOfBoundsXBelow0 = <Square x={-1} y={1} piece={'white-knight'} />
+const outOfBoundsXOver7 = <Square x={9} y={1} piece={'white-knight'} />
+const outOfBoundsYBelow0 = <Square x={1} y={-1} piece={'white-knight'} />
+const outOfBoundsYOver7 = <Square x={1} y={12} piece={'white-knight'} />
+
+jest.mock('../globalVariables.js', () => {
+    const originalModule = jest.requireActual('../globalVariables.js');
+    return {
+        ...originalModule,
+        CurrentSquareSelection: {
+            x: 7,
+            y: 2
+        },
+        CastlingRights: {
+            whiteShortCastle: true,
+            whiteLongCastle: true,
+            blackShortCastle: true,
+            blackLongCastle: true
+        },
+        BoardPosition: [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+    };
+});
 
 beforeAll(() => {
     const pieceNames = Object.keys(pieces);
@@ -241,6 +273,22 @@ describe('Testing the isSquareValid() function', () => {
 
     test('check if the square is valid - fakeSquare', () => {
         expect(HelperMethods.isSquareValid(fakeSquare)).toBe(false);
+    });
+
+    test('check if the square is valid - outOfBoundsXBelow0', () => {
+        expect(HelperMethods.isSquareValid(outOfBoundsXBelow0)).toBe(false);
+    });
+
+    test('check if the square is valid - outOfBoundsXOver7', () => {
+        expect(HelperMethods.isSquareValid(outOfBoundsXOver7)).toBe(false);
+    });
+
+    test('check if the square is valid - outOfBoundsYBelow0', () => {
+        expect(HelperMethods.isSquareValid(outOfBoundsYBelow0)).toBe(false);
+    });
+
+    test('check if the square is valid - outOfBoundsYOver7', () => {
+        expect(HelperMethods.isSquareValid(outOfBoundsYOver7)).toBe(false);
     });
 
     test('check if the square is valid - whitePieces', () => {
@@ -1482,28 +1530,100 @@ describe('Testing the checkIfTwoSquaresAreOnTheSameRow() function', () => {
         expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(null, null)).toBe(false);
     });
 
-    test('check if two squares are on the same row - invalid square1 props null', () => {
-        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow({ props: null }, square3)).toBe(false);
+    test('check if two squares are on the same row - invalid square1 emptyPropsPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(emptyPropsPiece, square3)).toBe(false);
     });
 
-    test('check if two squares are on the same row - invalid square2 props null', () => {
-        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(square1, { props: null })).toBe(false);
+    test('check if two squares are on the same row - invalid square2 emptyPropsPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(square1, emptyPropsPiece)).toBe(false);
     });
 
-    test('check if two squares are on the same row - invalid both squares props null', () => {
-        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow({ props: null }, { props: null })).toBe(false);
+    test('check if two squares are on the same row - invalid both squares emptyPropsPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(emptyPropsPiece, emptyPropsPiece)).toBe(false);
     });
 
-    test('check if two squares are on the same row - invalid square1 empty x', () => {
-        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow({ props: { x: {} } }, square3)).toBe(false);
+    test('check if two squares are on the same row - invalid square1 nullPropsPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(nullPropsPiece, square3)).toBe(false);
     });
 
-    test('check if two squares are on the same row - invalid square2 empty x', () => {
-        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(square1, { props: { x: {} } })).toBe(false);
+    test('check if two squares are on the same row - invalid square2 nullPropsPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(square1, nullPropsPiece)).toBe(false);
     });
 
-    test('check if two squares are on the same row - invalid both squares empty x', () => {
-        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow({ props: { x: {} } }, { props: { x: {} } })).toBe(false);
+    test('check if two squares are on the same row - invalid both squares nullPropsPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(nullPropsPiece, nullPropsPiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same row - invalid square1 emptyPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(emptyPiece, square3)).toBe(false);
+    });
+
+    test('check if two squares are on the same row - invalid square2 emptyPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(square1, emptyPiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same row - invalid both squares emptyPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(emptyPiece, emptyPiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same row - invalid square1 invalidPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(invalidPiece, square3)).toBe(false);
+    });
+
+    test('check if two squares are on the same row - invalid square2 invalidPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(square1, invalidPiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same row - invalid both squares invalidPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(invalidPiece, invalidPiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same row - valid square1 nonExistentPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(nonExistentPiece, square3)).toBe(true);
+    });
+
+    test('check if two squares are on the same row - invalid square2 nonExistentPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(square1, nonExistentPiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same row - valid both squares nonExistentPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(nonExistentPiece, nonExistentPiece)).toBe(true);
+    });
+
+    test('check if two squares are on the same row - invalid square1 emptyPiecePiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(emptyPiecePiece, square3)).toBe(false);
+    });
+
+    test('check if two squares are on the same row - invalid square2 emptyPiecePiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(square1, emptyPiecePiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same row - invalid both squares emptyPiecePiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(emptyPiecePiece, emptyPiecePiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same row - invalid square1 nullPiecePiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(nullPiecePiece, square3)).toBe(false);
+    });
+
+    test('check if two squares are on the same row - invalid square2 nullPiecePiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(square1, nullPiecePiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same row - invalid both squares nullPiecePiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(nullPiecePiece, nullPiecePiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same row - invalid square1 fakeSquare', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(fakeSquare, square3)).toBe(false);
+    });
+
+    test('check if two squares are on the same row - invalid square2 fakeSquare', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(square1, fakeSquare)).toBe(false);
+    });
+
+    test('check if two squares are on the same row - invalid both squares fakeSquare', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameRow(fakeSquare, fakeSquare)).toBe(false);
     });
 });
 
@@ -1532,28 +1652,1180 @@ describe('Testing the checkIfTwoSquaresAreOnTheSameColumn() function', () => {
         expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(null, null)).toBe(false);
     });
 
-    test('check if two squares are on the same column - invalid square1 props null', () => {
-        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn({ props: null }, square3)).toBe(false);
+    test('check if two squares are on the same column - invalid square1 emptyPropsPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(emptyPropsPiece, square3)).toBe(false);
     });
 
-    test('check if two squares are on the same column - invalid square2 props null', () => {
-        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(square1, { props: null })).toBe(false);
+    test('check if two squares are on the same column - invalid square2 emptyPropsPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(square1, emptyPropsPiece)).toBe(false);
     });
 
-    test('check if two squares are on the same column - invalid both squares props null', () => {
-        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn({ props: null }, { props: null })).toBe(false);
+    test('check if two squares are on the same column - invalid both squares emptyPropsPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(emptyPropsPiece, emptyPropsPiece)).toBe(false);
     });
 
-    test('check if two squares are on the same column - invalid square1 empty y', () => {
-        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn({ props: { y: {} } }, square3)).toBe(false);
+    test('check if two squares are on the same column - invalid square1 nullPropsPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(nullPropsPiece, square3)).toBe(false);
     });
 
-    test('check if two squares are on the same column - invalid square2 empty y', () => {
-        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(square1, { props: { y: {} } })).toBe(false);
+    test('check if two squares are on the same column - invalid square2 nullPropsPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(square1, nullPropsPiece)).toBe(false);
     });
 
-    test('check if two squares are on the same column - invalid both squares empty y', () => {
-        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn({ props: { y: {} } }, { props: { y: {} } })).toBe(false);
+    test('check if two squares are on the same column - invalid both squares nullPropsPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(nullPropsPiece, nullPropsPiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same column - invalid square1 emptyPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(emptyPiece, square3)).toBe(false);
+    });
+
+    test('check if two squares are on the same column - invalid square2 emptyPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(square1, emptyPiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same column - invalid both squares emptyPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(emptyPiece, emptyPiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same column - invalid square1 invalidPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(invalidPiece, square3)).toBe(false);
+    });
+
+    test('check if two squares are on the same column - invalid square2 invalidPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(square1, invalidPiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same column - invalid both squares invalidPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(invalidPiece, invalidPiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same column - valid square1 nonExistentPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(nonExistentPiece, square3)).toBe(true);
+    });
+
+    test('check if two squares are on the same column - invalid square2 nonExistentPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(square1, nonExistentPiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same column - valid both squares nonExistentPiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(nonExistentPiece, nonExistentPiece)).toBe(true);
+    });
+
+    test('check if two squares are on the same column - invalid square1 emptyPiecePiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(emptyPiecePiece, square3)).toBe(false);
+    });
+
+    test('check if two squares are on the same column - invalid square2 emptyPiecePiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(square1, emptyPiecePiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same column - invalid both squares emptyPiecePiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(emptyPiecePiece, emptyPiecePiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same column - invalid square1 nullPiecePiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(nullPiecePiece, square3)).toBe(false);
+    });
+
+    test('check if two squares are on the same column - invalid square2 nullPiecePiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(square1, nullPiecePiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same column - invalid both squares nullPiecePiece', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(nullPiecePiece, nullPiecePiece)).toBe(false);
+    });
+
+    test('check if two squares are on the same column - invalid square1 fakeSquare', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(fakeSquare, square3)).toBe(false);
+    });
+
+    test('check if two squares are on the same column - invalid square2 fakeSquare', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(square1, fakeSquare)).toBe(false);
+    });
+
+    test('check if two squares are on the same column - invalid both squares fakeSquare', () => {
+        expect(HelperMethods.checkIfTwoSquaresAreOnTheSameColumn(fakeSquare, fakeSquare)).toBe(false);
+    });
+});
+
+describe('Testing the isSquareOnRow() function', () => {
+    test('check if the square is on row - valid square and row', () => {
+        const pieceObj = whitePieces.find(p => p.king);
+        const piece = pieceObj.king;
+
+        expect(HelperMethods.isSquareOnRow(piece, 7)).toBe(true);
+    });
+
+    test('check if the square is on row - invalid negative row number', () => {
+        const pieceObj = whitePieces.find(p => p.king);
+        const piece = pieceObj.king;
+
+        expect(HelperMethods.isSquareOnRow(piece, -1)).toBe(false);
+    });
+
+    test('check if the square is on row - invalid string row number', () => {
+        const pieceObj = blackPieces.find(p => p.king);
+        const piece = pieceObj.king;
+
+        expect(HelperMethods.isSquareOnRow(piece, '')).toBe(false);
+    });
+
+    test('check if the square is on row - invalid null row number', () => {
+        const pieceObj = blackPieces.find(p => p.king);
+        const piece = pieceObj.king;
+
+        expect(HelperMethods.isSquareOnRow(piece, null)).toBe(false);
+    });
+
+    test('check if the square is on row - invalid emptyPropsPiece ', () => {
+        expect(HelperMethods.isSquareOnRow(emptyPropsPiece, 7)).toBe(false);
+    });
+
+    test('check if the square is on row - invalid nullPropsPiece ', () => {
+        expect(HelperMethods.isSquareOnRow(nullPropsPiece, 7)).toBe(false);
+    });
+
+    test('check if the square is on row - invalid emptyPiece ', () => {
+        expect(HelperMethods.isSquareOnRow(emptyPiece, 7)).toBe(false);
+    });
+
+    test('check if the square is on row - invalid invalidPiece ', () => {
+        expect(HelperMethods.isSquareOnRow(invalidPiece, 7)).toBe(false);
+    });
+
+    test('check if the square is on row - invalid nonExistentPiece ', () => {
+        expect(HelperMethods.isSquareOnRow(nonExistentPiece, 7)).toBe(false);
+    });
+
+    test('check if the square is on row - invalid emptyPiecePiece ', () => {
+        expect(HelperMethods.isSquareOnRow(emptyPiecePiece, 7)).toBe(false);
+    });
+
+    test('check if the square is on row - invalid nullPiecePiece ', () => {
+        expect(HelperMethods.isSquareOnRow(nullPiecePiece, 7)).toBe(false);
+    });
+
+    test('check if the square is on row - invalid fakeSquare ', () => {
+        expect(HelperMethods.isSquareOnRow(fakeSquare, 7)).toBe(false);
+    });
+});
+
+describe('Testing the isSquareOnColumn() function', () => {
+    test('check if the square is on column - valid square and column', () => {
+        const pieceObj = whitePieces.find(p => p.king);
+        const piece = pieceObj.king;
+
+        expect(HelperMethods.isSquareOnColumn(piece, 2)).toBe(true);
+    });
+
+    test('check if the square is on column - invalid negative column number', () => {
+        const pieceObj = whitePieces.find(p => p.king);
+        const piece = pieceObj.king;
+
+        expect(HelperMethods.isSquareOnColumn(piece, -1)).toBe(false);
+    });
+
+    test('check if the square is on column - invalid string column number', () => {
+        const pieceObj = blackPieces.find(p => p.king);
+        const piece = pieceObj.king;
+
+        expect(HelperMethods.isSquareOnColumn(piece, '')).toBe(false);
+    });
+
+    test('check if the square is on column - invalid null column number', () => {
+        const pieceObj = blackPieces.find(p => p.king);
+        const piece = pieceObj.king;
+
+        expect(HelperMethods.isSquareOnColumn(piece, null)).toBe(false);
+    });
+
+    test('check if the square is on column - invalid emptyPropsPiece ', () => {
+        expect(HelperMethods.isSquareOnColumn(emptyPropsPiece, 7)).toBe(false);
+    });
+
+    test('check if the square is on column - invalid nullPropsPiece ', () => {
+        expect(HelperMethods.isSquareOnColumn(nullPropsPiece, 7)).toBe(false);
+    });
+
+    test('check if the square is on column - invalid emptyPiece ', () => {
+        expect(HelperMethods.isSquareOnColumn(emptyPiece, 7)).toBe(false);
+    });
+
+    test('check if the square is on column - invalid invalidPiece ', () => {
+        expect(HelperMethods.isSquareOnColumn(invalidPiece, 7)).toBe(false);
+    });
+
+    test('check if the square is on column - invalid nonExistentPiece ', () => {
+        expect(HelperMethods.isSquareOnColumn(nonExistentPiece, 7)).toBe(false);
+    });
+
+    test('check if the square is on column - invalid emptyPiecePiece ', () => {
+        expect(HelperMethods.isSquareOnColumn(emptyPiecePiece, 7)).toBe(false);
+    });
+
+    test('check if the square is on column - invalid nullPiecePiece ', () => {
+        expect(HelperMethods.isSquareOnColumn(nullPiecePiece, 7)).toBe(false);
+    });
+
+    test('check if the square is on column - invalid fakeSquare ', () => {
+        expect(HelperMethods.isSquareOnColumn(fakeSquare, 7)).toBe(false);
+    });
+});
+
+describe('Testing the getPieceColor() function', () => {
+    test('check if if we can get the piece color - valid', () => {
+        const pieceObj = whitePieces.find(p => p.king);
+        const piece = pieceObj.king;
+
+        expect(HelperMethods.getPieceColor(piece)).toBe('white');
+    });
+
+    test('check if if we can get the piece color - invalid emptyPropsPiece', () => {
+        expect(HelperMethods.getPieceColor(emptyPropsPiece)).toBe('');
+    });
+
+    test('check if if we can get the piece color - invalid nullPropsPiece', () => {
+        expect(HelperMethods.getPieceColor(nullPropsPiece)).toBe('');
+    });
+
+    test('check if if we can get the piece color - invalid emptyPiece', () => {
+        expect(HelperMethods.getPieceColor(emptyPiece)).toBe('');
+    });
+
+    test('check if if we can get the piece color - invalid invalidPiece', () => {
+        expect(HelperMethods.getPieceColor(invalidPiece)).toBe('');
+    });
+
+    test('check if if we can get the piece color - valid nonExistentPiece', () => {
+        expect(HelperMethods.getPieceColor(nonExistentPiece)).toBe('white');
+    });
+
+    test('check if if we can get the piece color - invalid emptyPiecePiece', () => {
+        expect(HelperMethods.getPieceColor(emptyPiecePiece)).toBe('');
+    });
+
+    test('check if if we can get the piece color - invalid nullPiecePiece', () => {
+        expect(HelperMethods.getPieceColor(nullPiecePiece)).toBe('');
+    });
+
+    test('check if if we can get the piece color - invalid fakeSquare', () => {
+        expect(HelperMethods.getPieceColor(fakeSquare)).toBe('');
+    });
+});
+
+describe('Testing the isColorWhite() function', () => {
+    test('check if the color is white - valid', () => {
+        expect(HelperMethods.isColorWhite('white')).toBe(true);
+    });
+
+    test('check if the color is white - invalid', () => {
+        expect(HelperMethods.isColorWhite('black')).toBe(false);
+    });
+
+    test('check if the color is white - invalid empty', () => {
+        expect(HelperMethods.isColorWhite('')).toBe(false);
+    });
+
+    test('check if the color is white - invalid null', () => {
+        expect(HelperMethods.isColorWhite()).toBe(false);
+    });
+});
+
+describe('Testing the isColorBlack() function', () => {
+    test('check if the color is black - valid', () => {
+        expect(HelperMethods.isColorBlack('black')).toBe(true);
+    });
+
+    test('check if the color is black - invalid', () => {
+        expect(HelperMethods.isColorBlack('white')).toBe(false);
+    });
+
+    test('check if the color is black - invalid empty', () => {
+        expect(HelperMethods.isColorBlack('')).toBe(false);
+    });
+
+    test('check if the color is black - invalid null', () => {
+        expect(HelperMethods.isColorBlack()).toBe(false);
+    });
+});
+
+describe('Testing the areSameColor() function', () => {
+    let piece, piece2, piece3;
+
+    beforeEach(() => {
+        const pieceObj = whitePieces.find(p => p.king);
+        const pieceObj2 = whitePieces.find(p => p.pawn);
+        const pieceObj3 = blackPieces.find(p => p.pawn);
+        piece = pieceObj.king;
+        piece2 = pieceObj2.pawn;
+        piece3 = pieceObj3.pawn;
+    })
+
+    test('check if the squares have pieces with the same color - valid', () => {
+        expect(HelperMethods.areSameColor(piece, piece2)).toBe(true);
+    });
+
+    test('check if the squares have pieces with the same color - invalid', () => {
+        expect(HelperMethods.areSameColor(piece, piece3)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid square1 emptyPropsPiece', () => {
+        expect(HelperMethods.areSameColor(emptyPropsPiece, piece2)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid square2 emptyPropsPiece', () => {
+        expect(HelperMethods.areSameColor(piece, emptyPropsPiece)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid both squares emptyPropsPiece', () => {
+        expect(HelperMethods.areSameColor(emptyPropsPiece, emptyPropsPiece)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid square1 nullPropsPiece', () => {
+        expect(HelperMethods.areSameColor(nullPropsPiece, piece2)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid square2 nullPropsPiece', () => {
+        expect(HelperMethods.areSameColor(piece, nullPropsPiece)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid both squares nullPropsPiece', () => {
+        expect(HelperMethods.areSameColor(nullPropsPiece, nullPropsPiece)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid square1 emptyPiece', () => {
+        expect(HelperMethods.areSameColor(emptyPiece, piece2)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid square2 emptyPiece', () => {
+        expect(HelperMethods.areSameColor(piece, emptyPiece)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid both squares emptyPiece', () => {
+        expect(HelperMethods.areSameColor(emptyPiece, emptyPiece)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid square1 invalidPiece', () => {
+        expect(HelperMethods.areSameColor(invalidPiece, piece2)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid square2 invalidPiece', () => {
+        expect(HelperMethods.areSameColor(piece, invalidPiece)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid both squares invalidPiece', () => {
+        expect(HelperMethods.areSameColor(invalidPiece, invalidPiece)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - valid square1 nonExistentPiece', () => {
+        expect(HelperMethods.areSameColor(nonExistentPiece, piece2)).toBe(true);
+    });
+
+    test('check if the squares have pieces with the same color - valid square2 nonExistentPiece', () => {
+        expect(HelperMethods.areSameColor(piece, nonExistentPiece)).toBe(true);
+    });
+
+    test('check if the squares have pieces with the same color - valid both squares nonExistentPiece', () => {
+        expect(HelperMethods.areSameColor(nonExistentPiece, nonExistentPiece)).toBe(true);
+    });
+
+    test('check if the squares have pieces with the same color - invalid square1 emptyPiecePiece', () => {
+        expect(HelperMethods.areSameColor(emptyPiecePiece, piece2)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid square2 emptyPiecePiece', () => {
+        expect(HelperMethods.areSameColor(piece, emptyPiecePiece)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid both squares emptyPiecePiece', () => {
+        expect(HelperMethods.areSameColor(emptyPiecePiece, emptyPiecePiece)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid square1 nullPiecePiece', () => {
+        expect(HelperMethods.areSameColor(nullPiecePiece, piece2)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid square2 nullPiecePiece', () => {
+        expect(HelperMethods.areSameColor(piece, nullPiecePiece)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid both squares nullPiecePiece', () => {
+        expect(HelperMethods.areSameColor(nullPiecePiece, nullPiecePiece)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid square1 fakeSquare', () => {
+        expect(HelperMethods.areSameColor(fakeSquare, piece2)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid square2 fakeSquare', () => {
+        expect(HelperMethods.areSameColor(piece, fakeSquare)).toBe(false);
+    });
+
+    test('check if the squares have pieces with the same color - invalid both squares fakeSquare', () => {
+        expect(HelperMethods.areSameColor(fakeSquare, fakeSquare)).toBe(false);
+    });
+});
+
+describe('Testing the checkIfAMoveIsEqualToTheCurrentSelectedSquare() function', () => {
+    test('check if a square is equal to the current selected square - valid', () => {
+        const pieceObj = whitePieces.find(p => p.king);
+        const piece = pieceObj.king
+
+        expect(HelperMethods.checkIfAMoveIsEqualToTheCurrentSelectedSquare(piece)).toBe(true);
+    });
+
+    test('check if a square is equal to the current selected square - invalid', () => {
+        const pieceObj = whitePieces.find(p => p.pawn);
+        const piece = pieceObj.pawn
+
+        expect(HelperMethods.checkIfAMoveIsEqualToTheCurrentSelectedSquare(piece)).toBe(false);
+    });
+
+    test('check if a square is equal to the current selected square - invalid emptyPropsPiece', () => {
+        expect(HelperMethods.checkIfAMoveIsEqualToTheCurrentSelectedSquare(emptyPropsPiece)).toBe(false);
+    });
+
+    test('check if a square is equal to the current selected square - invalid nullPropsPiece', () => {
+        expect(HelperMethods.checkIfAMoveIsEqualToTheCurrentSelectedSquare(nullPropsPiece)).toBe(false);
+    });
+
+    test('check if a square is equal to the current selected square - invalid emptyPiece', () => {
+        expect(HelperMethods.checkIfAMoveIsEqualToTheCurrentSelectedSquare(emptyPiece)).toBe(false);
+    });
+
+    test('check if a square is equal to the current selected square - invalid invalidPiece', () => {
+        expect(HelperMethods.checkIfAMoveIsEqualToTheCurrentSelectedSquare(invalidPiece)).toBe(false);
+    });
+
+    test('check if a square is equal to the current selected square - invalid nonExistentPiece', () => {
+        expect(HelperMethods.checkIfAMoveIsEqualToTheCurrentSelectedSquare(nonExistentPiece)).toBe(false);
+    });
+
+    test('check if a square is equal to the current selected square - invalid emptyPiecePiece', () => {
+        expect(HelperMethods.checkIfAMoveIsEqualToTheCurrentSelectedSquare(emptyPiecePiece)).toBe(false);
+    });
+
+    test('check if a square is equal to the current selected square - invalid nullPiecePiece', () => {
+        expect(HelperMethods.checkIfAMoveIsEqualToTheCurrentSelectedSquare(nullPiecePiece)).toBe(false);
+    });
+
+    test('check if a square is equal to the current selected square - invalid fakeSquare', () => {
+        expect(HelperMethods.checkIfAMoveIsEqualToTheCurrentSelectedSquare(fakeSquare)).toBe(false);
+    });
+});
+
+describe('Testing the compareIfTwoSquaresAreTheSame() function', () => {
+    let piece, piece2
+
+    beforeEach(() => {
+        const pieceObj = whitePieces.find(p => p.king);
+        const pieceObj2 = whitePieces.find(p => p.pawn);
+
+        piece = pieceObj.king
+        piece2 = pieceObj2.pawn
+    })
+
+    test('check if two squares have the same position - valid', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(piece, piece)).toBe(true);
+    });
+
+    test('check if two squares have the same position - invalid', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(piece, piece2)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid square1 emptyPropsPiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(emptyPropsPiece, piece2)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid square2 emptyPropsPiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(piece, emptyPropsPiece)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid both squares emptyPropsPiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(emptyPropsPiece, emptyPropsPiece)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid square1 nullPropsPiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(nullPropsPiece, piece2)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid square2 nullPropsPiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(piece, nullPropsPiece)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid both squares nullPropsPiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(nullPropsPiece, nullPropsPiece)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid square1 emptyPiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(emptyPiece, piece2)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid square2 emptyPiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(piece, emptyPiece)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid both squares emptyPiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(emptyPiece, emptyPiece)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid square1 invalidPiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(invalidPiece, piece2)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid square2 invalidPiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(piece, invalidPiece)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid both squares invalidPiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(invalidPiece, invalidPiece)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid square1 nonExistentPiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(nonExistentPiece, piece2)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid square2 nonExistentPiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(piece, nonExistentPiece)).toBe(false);
+    });
+
+    test('check if two squares have the same position - valid both squares nonExistentPiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(nonExistentPiece, nonExistentPiece)).toBe(true);
+    });
+
+    test('check if two squares have the same position - invalid square1 emptyPiecePiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(emptyPiecePiece, piece2)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid square2 emptyPiecePiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(piece, emptyPiecePiece)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid both squares emptyPiecePiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(emptyPiecePiece, emptyPiecePiece)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid square1 nullPiecePiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(nullPiecePiece, piece2)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid square2 nullPiecePiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(piece, nullPiecePiece)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid both squares nullPiecePiece', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(nullPiecePiece, nullPiecePiece)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid square1 fakeSquare', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(fakeSquare, piece2)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid square2 fakeSquare', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(piece, fakeSquare)).toBe(false);
+    });
+
+    test('check if two squares have the same position - invalid both squares fakeSquare', () => {
+        expect(HelperMethods.compareIfTwoSquaresAreTheSame(fakeSquare, fakeSquare)).toBe(false);
+    });
+});
+
+describe('Testing the getATargetSquareByLocation() function', () => {
+    let pieces
+
+    beforeEach(() => {
+        pieces = whitePieces.map(obj => Object.values(obj)[0])
+    })
+
+    test('check if we can get a square by location - valid', () => {
+        const pieceObj = whitePieces.find(p => p.pawn);
+        const piece = pieceObj.pawn
+
+        expect(HelperMethods.getATargetSquareByLocation(7, 0, pieces)).toBe(piece);
+    });
+
+    test('check if we can get a square by location - valid no piece', () => {
+        expect(HelperMethods.getATargetSquareByLocation(3, 0, pieces)).toBe(undefined);
+    });
+
+    test('check if we can get a square by location - invalid out of bounds X below 0', () => {
+        expect(HelperMethods.getATargetSquareByLocation(-1, 0, pieces)).toBe(undefined);
+    });
+
+    test('check if we can get a square by location - invalid out of bounds X above 7', () => {
+        expect(HelperMethods.getATargetSquareByLocation(10, 0, pieces)).toBe(undefined);
+    });
+
+    test('check if we can get a square by location - invalid out of bounds Y below 0', () => {
+        expect(HelperMethods.getATargetSquareByLocation(5, -2, pieces)).toBe(undefined);
+    });
+
+    test('check if we can get a square by location - invalid out of bounds Y above 7', () => {
+        expect(HelperMethods.getATargetSquareByLocation(5, 20, pieces)).toBe(undefined);
+    });
+
+    test('check if we can get a square by location - invalid array empty', () => {
+        expect(HelperMethods.getATargetSquareByLocation(7, 0, [])).toBe(undefined);
+    });
+
+    test('check if we can get a square by location - invalid array null', () => {
+        expect(HelperMethods.getATargetSquareByLocation(7, 0, null)).toBe(undefined);
+    });
+});
+
+describe('Testing the getATargetSquareByPiece() function', () => {
+    let pieces
+
+    beforeEach(() => {
+        pieces = whitePieces.map(obj => Object.values(obj)[0])
+    })
+
+    test('check if we can get a square that has a piece - valid', () => {
+        const pieceObj = whitePieces.find(p => p.pawn);
+        const piece = pieceObj.pawn
+
+        expect(HelperMethods.getATargetSquareByPiece('white-pawn', pieces)).toBe(piece);
+    });
+
+    test('check if we can get a square that has a piece - valid no piece', () => {
+        expect(HelperMethods.getATargetSquareByPiece('black-pawn', pieces)).toBe(undefined);
+    });
+
+    test('check if we can get a square that has a piece - invalid not existent piece', () => {
+        expect(HelperMethods.getATargetSquareByPiece('black-horse', pieces)).toBe(undefined);
+    });
+
+    test('check if we can get a square that has a piece - invalid not a valid piece', () => {
+        expect(HelperMethods.getATargetSquareByPiece('black_horse', pieces)).toBe(undefined);
+    });
+
+    test('check if we can get a square that has a piece - invalid empty piece', () => {
+        expect(HelperMethods.getATargetSquareByPiece('', pieces)).toBe(undefined);
+    });
+
+    test('check if we can get a square that has a piece - invalid piece null', () => {
+        expect(HelperMethods.getATargetSquareByPiece(null, pieces)).toBe(undefined);
+    });
+
+    test('check if we can get a square that has a piece - invalid pieces empty', () => {
+        expect(HelperMethods.getATargetSquareByPiece('white-pawn', [])).toBe(undefined);
+    });
+
+    test('check if we can get a square that has a piece - invalid pieces null', () => {
+        expect(HelperMethods.getATargetSquareByPiece('white-pawn', null)).toBe(undefined);
+    });
+});
+
+describe('Testing the isCastlingPossible() function', () => {
+    beforeEach(() => {
+        const GlobalVariables = require("../globalVariables.js")
+
+        GlobalVariables.CastlingRights = {
+            whiteShortCastle: true,
+            whiteLongCastle: true,
+            blackShortCastle: true,
+            blackLongCastle: true
+        }
+
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+    })
+
+    test('check if castling is possible - valid white long castle', () => {
+        expect(HelperMethods.isCastlingPossible('long', true)).toBe(true);
+    });
+
+    test('check if castling is possible - valid white short castle', () => {
+        expect(HelperMethods.isCastlingPossible('short', true)).toBe(true);
+    });
+
+    test('check if castling is possible - valid black long castle', () => {
+        expect(HelperMethods.isCastlingPossible('long', false)).toBe(true);
+    });
+
+    test('check if castling is possible - valid black short castle', () => {
+        expect(HelperMethods.isCastlingPossible('short', false)).toBe(true);
+    });
+
+    test('check if castling is possible - invalid castling type', () => {
+        expect(HelperMethods.isCastlingPossible('extraLarge', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid castling type empty', () => {
+        expect(HelperMethods.isCastlingPossible('', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid castling type null', () => {
+        expect(HelperMethods.isCastlingPossible(null, false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white long castle pieces in-between knight', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', 'N', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white long castle pieces in-between bishop', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', 'B', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white long castle pieces in-between queen', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', 'Q', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white long castle king not on right square', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', 'K', ' ', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white long castle rook not on right square', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            [' ', 'R', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white long castle in check', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'q', 'k', ' ', 'r'],
+            ['p', 'p', 'p', 'p', ' ', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', ' ', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white long castle castle across check', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', 'q', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', ' ', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', ' ', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white long castle end up in check', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', 'q', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', ' ', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', ' ', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white long castle castling forbidden (pieces moved)', () => {
+        GlobalVariables.CastlingRights = {
+            whiteShortCastle: true,
+            whiteLongCastle: false,
+            blackShortCastle: true,
+            blackLongCastle: true
+        }
+        expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white short castle pieces in-between knight', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', 'N', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('short', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white short castle pieces in-between bishop', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', 'B', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('short', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white short castle king not on right square', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', 'K', ' ', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('short', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white short castle rook not on right square', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', 'R', ' ']
+        ]
+        expect(HelperMethods.isCastlingPossible('short', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white short castle in check', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'q', 'k', ' ', 'r'],
+            ['p', 'p', 'p', 'p', ' ', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', ' ', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('short', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white short castle castle across check', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', 'q', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', ' ', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', ' ', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('short', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white short castle end up in check', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', 'q', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', ' ', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', ' ', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('short', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid white short castle castling forbidden (pieces moved)', () => {
+        GlobalVariables.CastlingRights = {
+            whiteShortCastle: false,
+            whiteLongCastle: true,
+            blackShortCastle: true,
+            blackLongCastle: true
+        }
+        expect(HelperMethods.isCastlingPossible('short', true)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black long castle pieces in-between knight', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', 'n', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black long castle pieces in-between bishop', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', 'b', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black long castle pieces in-between queen', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', 'q', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black long castle king not on right square', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', 'k', ' ', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black long castle rook not on right square', () => {
+        GlobalVariables.BoardPosition = [
+            [' ', 'r', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black long castle in check', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', ' ', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', ' ', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'Q', 'K', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black long castle castle across check', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', ' ', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', ' ', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', 'Q', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black long castle end up in check', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', ' ', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', ' ', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', 'Q', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black long castle castling forbidden (pieces moved)', () => {
+        GlobalVariables.CastlingRights = {
+            whiteShortCastle: true,
+            whiteLongCastle: true,
+            blackShortCastle: true,
+            blackLongCastle: false
+        }
+        expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black short castle pieces in-between knight', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', 'n', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('short', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black short castle pieces in-between bishop', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', 'b', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('short', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black short castle king not on right square', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', 'k', ' ', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('short', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black short castle rook not on right square', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', 'r', ' '],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('short', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black short castle in check', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', ' ', 'p', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', ' ', 'P', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'Q', 'K', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('short', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black short castle castle across check', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', ' ', 'p', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', ' ', 'P', 'P'],
+            ['R', ' ', ' ', ' ', 'K', 'Q', ' ', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('short', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black short castle end up in check', () => {
+        GlobalVariables.BoardPosition = [
+            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', ' ', 'p'],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['P', 'P', 'P', 'P', 'P', 'P', ' ', 'P'],
+            ['R', ' ', ' ', ' ', 'K', ' ', 'Q', 'R']
+        ]
+        expect(HelperMethods.isCastlingPossible('short', false)).toBe(false);
+    });
+
+    test('check if castling is possible - invalid black short castle castling forbidden (pieces moved)', () => {
+        GlobalVariables.CastlingRights = {
+            whiteShortCastle: true,
+            whiteLongCastle: true,
+            blackShortCastle: false,
+            blackLongCastle: true
+        }
+        expect(HelperMethods.isCastlingPossible('short', false)).toBe(false);
     });
 });
 
@@ -1564,4 +2836,13 @@ describe('Testing the {FUNCTION_NAME} function', () => {
         expect({WHAT_TO_SEND_TO_THE_FUNCTION}).toBe({WHAT_TO_EXPECT_FROM_THE_FUNCTION_AS_A_RESULT});
     });
 });
+
+    emptyPropsPiece
+    nullPropsPiece
+    emptyPiece
+    invalidPiece
+    nonExistentPiece
+    emptyPiecePiece
+    nullPiecePiece
+    fakeSquare
 */

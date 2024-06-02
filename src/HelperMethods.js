@@ -14,7 +14,7 @@ import * as GlobalVariables from './globalVariables';
 export function isSquareValid(square) {
     if (!square || !square.props || !square.props.piece ||
         square.props.piece.split(GlobalVariables.PIECE_DELIMITER).length !== 2 ||
-        isNaN(square.props.x) || isNaN(square.props.y)) {
+        isNaN(square.props.x) || isNaN(square.props.y) || square.props.x < 0 || square.props.x > 7 || square.props.y < 0 || square.props.y > 7) {
         return false
     }
 
@@ -516,6 +516,7 @@ export function checkIfTwoSquaresAreOnTheSameColumn(square1, square2) {
  * @returns {boolean} - True if the square is on the given row, false otherwise.
  */
 export function isSquareOnRow(square, rowNumber) {
+    if (!isSquareValid(square)) return false
     return square.props.x === rowNumber;
 }
 
@@ -526,6 +527,7 @@ export function isSquareOnRow(square, rowNumber) {
  * @returns {boolean} - True if the square is on the given column, false otherwise.
  */
 export function isSquareOnColumn(square, columnNumber) {
+    if (!isSquareValid(square)) return false
     return square.props.y === columnNumber;
 }
 
@@ -535,6 +537,7 @@ export function isSquareOnColumn(square, columnNumber) {
  * @returns {string} - The piece color.
  */
 export function getPieceColor(square) {
+    if (!isSquareValid(square)) return GlobalVariables.EMPTY_STRING
     return square.props.piece.split(GlobalVariables.PIECE_DELIMITER)[GlobalVariables.PIECE_COLOR_INDEX];
 }
 
@@ -563,6 +566,7 @@ export function isColorBlack(color) {
  * @returns {boolean} - True if the pieces are of the same color, false otherwise.
  */
 export function areSameColor(piece1, piece2) {
+    if (!isSquareValid(piece1) || !isSquareValid(piece2)) return false
     return getPieceColor(piece1) === getPieceColor(piece2);
 }
 
@@ -594,6 +598,7 @@ export function compareIfTwoSquaresAreTheSame(square1, square2) {
  * @returns {object} - The target square.
  */
 export function getATargetSquareByLocation(x, y, squares) {
+    if (!squares) return
     return squares.find(s => isSquareOnRow(s, x) && isSquareOnColumn(s, y))
 }
 
@@ -604,6 +609,7 @@ export function getATargetSquareByLocation(x, y, squares) {
  * @returns {object} - The target square.
  */
 export function getATargetSquareByPiece(piece, squares) {
+    if (!squares) return
     return squares.find(s => s.props.piece == piece)
 }
 
@@ -614,6 +620,8 @@ export function getATargetSquareByPiece(piece, squares) {
  * @returns {boolean} - True if castling is possible, false otherwise.
  */
 export function isCastlingPossible(castlingType, withWhite = true) {
+    if (!castlingType || (castlingType !== GlobalVariables.CASTLING_TYPES.LONG && castlingType !== GlobalVariables.CASTLING_TYPES.SHORT)) return false
+
     const row = withWhite ? GlobalVariables.CASTLE_ROW_WHITE : GlobalVariables.CASTLE_ROW_BLACK;
     const pieces = withWhite ? GlobalVariables.FEN_PIECES_WHITE : GlobalVariables.FEN_PIECES_BLACK;
     const [rookCol, kingCol, pathCols] = castlingType === GlobalVariables.CASTLING_TYPES.LONG ?
