@@ -101,6 +101,7 @@ export const FEN_COLOR = {
     BLACK: "b"
 }
 export const FEN_VALID_PARTS_NUMBER = 6
+export const INVALID_FEN_ERROR = "Invalid FEN"
 
 // Castling constants
 export const CASTLE_ROW_WHITE = 7;

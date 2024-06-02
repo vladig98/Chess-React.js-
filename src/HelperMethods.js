@@ -3,11 +3,34 @@ import Square from "./Square.js"
 import * as GlobalVariables from './globalVariables';
 
 /**
+ * Checks if a given square is valid based on its properties.
+ *
+ * This function verifies that the square object and its properties exist and are properly formatted. 
+ * It ensures that the piece property contains a delimiter and two parts, and that the x and y properties are numbers.
+ *
+ * @param {object} square - The square to validate.
+ * @returns {boolean} - True if the square is valid, false otherwise.
+ */
+export function isSquareValid(square) {
+    if (!square || !square.props || !square.props.piece ||
+        square.props.piece.split(GlobalVariables.PIECE_DELIMITER).length !== 2 ||
+        isNaN(square.props.x) || isNaN(square.props.y)) {
+        return false
+    }
+
+    return true
+}
+
+/**
  * Gets the piece from a square.
  * @param {object} square - The square to get the piece from.
  * @returns {string} - The piece.
  */
 export function getPiece(square) {
+    if (!isSquareValid(square)) {
+        return null
+    }
+
     return square.props.piece.split(GlobalVariables.PIECE_DELIMITER)[GlobalVariables.PIECE_PIECE_INDEX];
 }
 
@@ -18,6 +41,10 @@ export function getPiece(square) {
  * @returns {boolean} - True if the square has the piece, false otherwise.
  */
 export function doesTheSquareHasThePiece(square, piece) {
+    if (!isSquareValid(square) || !piece) {
+        return false
+    }
+
     return getPiece(square) === piece;
 }
 
@@ -81,6 +108,7 @@ export function isKnight(square) {
  * @returns {boolean} - True if the character is uppercase, false otherwise.
  */
 export function IsUpperCase(value) {
+    if (!value) return false
     const firstChar = getFirstCharacter(value)
     return firstChar >= GlobalVariables.ASCII_UPPERCASE_A && firstChar <= GlobalVariables.ASCII_UPPERCASE_Z;
 }
@@ -91,6 +119,7 @@ export function IsUpperCase(value) {
  * @returns {number} - The ASCII code of the first character.
  */
 export function getFirstCharacter(value) {
+    if (!value) return -1
     return value.charCodeAt(0);
 }
 
@@ -100,6 +129,7 @@ export function getFirstCharacter(value) {
  * @returns {boolean} - True if the character is lowercase, false otherwise.
  */
 export function IsLowerCase(value) {
+    if (!value) return false
     const firstChar = getFirstCharacter(value)
     return firstChar >= GlobalVariables.ASCII_LOWERCASE_A && firstChar <= GlobalVariables.ASCII_LOWERCASE_Z;
 }
@@ -110,7 +140,13 @@ export function IsLowerCase(value) {
  * @returns {boolean} - True if the character is a digit, false otherwise.
  */
 export function IsDigit(value) {
-    const firstChar = getFirstCharacter(value)
+    // Convert the value to a string to handle numeric input correctly
+    const strValue = String(value);
+
+    // Get the ASCII code of the first character
+    const firstChar = getFirstCharacter(strValue);
+
+    // Check if the ASCII code corresponds to a digit (0-9)
     return firstChar >= GlobalVariables.ASCII_DIGIT_0 && firstChar <= GlobalVariables.ASCII_DIGIT_9;
 }
 
@@ -120,11 +156,19 @@ export function IsDigit(value) {
  * @returns {object} - An object containing the FEN components.
  */
 export function ParseFEN(fen) {
+    if (!fen) throw new Error(GlobalVariables.INVALID_FEN_ERROR);
+
     const fenParts = fen.split(GlobalVariables.EMPTY_SPACE);
     if (fenParts.length !== GlobalVariables.FEN_VALID_PARTS_NUMBER) {
-        throw new Error('Invalid FEN');
+        throw new Error(GlobalVariables.INVALID_FEN_ERROR);
     }
     const [fenBoard, fenTurn, fenCastling, fenEnPassant, fenHalfMoves, fenFullMoves] = fenParts;
+
+    if (!isBoardValid(fenBoard) || !isTurnValid(fenTurn) || !isCastlingValid(fenCastling) ||
+        !isEnPassantValid(fenEnPassant) || !isHalfMovesValid(fenHalfMoves) || !isFullMovesValid(fenFullMoves)) {
+        throw new Error(GlobalVariables.INVALID_FEN_ERROR);
+    }
+
     return {
         fenBoard,
         fenTurn,
@@ -136,11 +180,264 @@ export function ParseFEN(fen) {
 }
 
 /**
+ * Validates a chessboard represented as a FEN board string.
+ * 
+ * @param {string} board - The FEN board string to validate.
+ * @returns {boolean} - True if the board is valid, otherwise false.
+ * 
+ * Validations:
+ * - Board must contain 8 rows.
+ * - Each row must have exactly 8 elements (pieces or empty spaces represented by digits).
+ * - The board must contain exactly two kings (one white and one black).
+ * - There must be other pieces that makes the game valid.
+ * - The kings must not be positioned next to each other.
+ */
+export function isBoardValid(board) {
+    if (!board) return false;
+
+    const rows = board.split(GlobalVariables.FEN_BOARD_DELIMITER);
+    const validPieces = new Set([...Object.values(GlobalVariables.FEN_PIECES_WHITE), ...Object.values(GlobalVariables.FEN_PIECES_BLACK)]);
+
+    // Check if board has 8 rows
+    if (rows.length !== 8) {
+        return false;
+    }
+
+    // Initialize counters
+    let kingCount = { k: 0, K: 0 };
+    let pieceCount = { q: 0, Q: 0, r: 0, R: 0, p: 0, P: 0, n: 0, N: 0, b: 0, B: 0 };
+
+    // Check each row
+    for (const row of rows) {
+        let elements = 0;
+
+        for (const char of row) {
+            if (validPieces.has(char)) {
+                elements++;
+                if (char === GlobalVariables.FEN_PIECES_BLACK.KING || char === GlobalVariables.FEN_PIECES_WHITE.KING) {
+                    kingCount[char]++;
+                } else {
+                    pieceCount[char]++;
+                }
+            } else if (IsDigit(char)) {
+                elements += parseInt(char, 10);
+            } else {
+                return false;
+            }
+        }
+
+        // Check if row has exactly 8 elements
+        if (elements !== 8) {
+            return false;
+        }
+    }
+
+    // Ensure there are exactly 2 kings
+    if (kingCount.k !== 1 || kingCount.K !== 1) {
+        return false;
+    }
+
+    // Ensure there is at least one other piece that makes the game valid
+    const whiteKnightBishop = pieceCount.N > 0 && pieceCount.B > 0;
+    const blackKnightBishop = pieceCount.n > 0 && pieceCount.b > 0;
+
+    const isValidGame =
+        pieceCount.q + pieceCount.Q > 0 ||
+        pieceCount.r + pieceCount.R > 0 ||
+        pieceCount.p + pieceCount.P > 0 ||
+        whiteKnightBishop || blackKnightBishop ||
+        pieceCount.N > 1 || pieceCount.n > 1;
+
+    if (!isValidGame) {
+        return false;
+    }
+
+    // Ensure the kings are not next to one another
+    const directions = [
+        [1, 0], [-1, 0], [0, 1], [0, -1],
+        [1, 1], [1, -1], [-1, 1], [-1, -1]
+    ];
+
+    const getKingPosition = (char) => {
+        for (let i = 0; i < rows.length; i++) {
+            for (let j = 0; j < rows[i].length; j++) {
+                if (rows[i][j] === char) {
+                    return { x: i, y: j };
+                }
+            }
+        }
+        return null;
+    };
+
+    const whiteKingPos = getKingPosition(GlobalVariables.FEN_PIECES_WHITE.KING);
+    const blackKingPos = getKingPosition(GlobalVariables.FEN_PIECES_BLACK.KING);
+
+    for (const [dx, dy] of directions) {
+        if (whiteKingPos.x + dx === blackKingPos.x && whiteKingPos.y + dy === blackKingPos.y) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Validates the castling rights string in a FEN notation.
+ * 
+ * @param {string} castling - The castling rights string to validate.
+ * @returns {boolean} - True if the castling rights string is valid, otherwise false.
+ * 
+ * Validations:
+ * - Castling can be '-' or a string containing 'K', 'Q', 'k', 'q'.
+ * - The string length must be between 1 and 4.
+ * - If 4 characters, it must have 2 capital and 2 lowercase letters.
+ * - If 3 characters, it must have either 2 capital and 1 lowercase or 1 capital and 2 lowercase.
+ * - If 2 characters, it can have any combination of 2 valid characters.
+ * - If 1 character, it must be one of the valid characters.
+ */
+export function isCastlingValid(castling) {
+    if (!castling) return false
+    if (castling === '-') {
+        return true;
+    }
+    if (typeof castling !== 'string' || castling.length < 1 || castling.length > 4) {
+        return false;
+    }
+    const validChars = new Set(['K', 'Q', 'k', 'q']);
+
+    const seenChars = new Set();
+
+    for (const char of castling) {
+        if (!validChars.has(char)) {
+            return false;
+        }
+        if (seenChars.has(char)) {
+            return false; // Duplicate character found
+        }
+        seenChars.add(char);
+    }
+
+    const uppercaseCount = [...castling].filter(char => char === 'K' || char === 'Q').length;
+    const lowercaseCount = [...castling].filter(char => char === 'k' || char === 'q').length;
+
+    if (castling.length === 4 && uppercaseCount === 2 && lowercaseCount === 2) {
+        return true;
+    }
+
+    if (castling.length === 3 && ((uppercaseCount === 2 && lowercaseCount === 1) || (uppercaseCount === 1 && lowercaseCount === 2))) {
+        return true;
+    }
+
+    if (castling.length === 2 && (uppercaseCount <= 2 && lowercaseCount <= 2)) {
+        return true;
+    }
+
+    if (castling.length === 1 && (uppercaseCount === 1 || lowercaseCount === 1)) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Validates the turn indicator in a FEN notation.
+ * 
+ * @param {string} turn - The turn indicator to validate.
+ * @returns {boolean} - True if the turn indicator is valid, otherwise false.
+ * 
+ * Validations:
+ * - Turn must be 'w' for white or 'b' for black.
+ */
+export function isTurnValid(turn) {
+    if (!turn) return false
+    return turn === GlobalVariables.FEN_COLOR.WHITE || turn === GlobalVariables.FEN_COLOR.BLACK
+}
+
+/**
+ * Validates the en passant target square in a FEN notation.
+ * 
+ * @param {string} enPassant - The en passant target square to validate.
+ * @returns {boolean} - True if the en passant target square is valid, otherwise false.
+ * 
+ * Validations:
+ * - En passant can be '-' indicating no en passant target square.
+ * - If not '-', it must be a string of length 2 with the first character being an uppercase letter and the second a digit.
+ */
+export function isEnPassantValid(enPassant) {
+    if (enPassant === GlobalVariables.PIECE_DELIMITER) {
+        return true;
+    }
+    if (typeof enPassant === 'string' && enPassant.length === 2) {
+        const [firstChar, secondChar] = enPassant.split(GlobalVariables.EMPTY_STRING);
+        return IsUpperCase(firstChar) && IsDigit(secondChar) && (secondChar === '3' || secondChar === '6') && (firstChar >= 'A' && firstChar <= 'H');
+    }
+    return false;
+}
+
+/**
+ * Validates the half-move clock in a FEN notation.
+ * 
+ * @param {number} halfMoves - The half-move clock value to validate.
+ * @returns {boolean} - True if the half-move clock is valid, otherwise false.
+ * 
+ * Validations:
+ * - Must be a number.
+ * - Must be between 0 and 50 inclusive.
+ */
+export function isHalfMovesValid(halfMoves) {
+    // Check if halfMoves is a number or a numeric string
+    if (typeof halfMoves !== 'number' && typeof halfMoves !== 'string') {
+        return false;
+    }
+
+    if (typeof halfMoves === 'string' && !halfMoves) return false
+
+    // Check if halfMoves can be converted to a valid number
+    const halfMovesNumber = Number(halfMoves);
+    if (isNaN(halfMovesNumber)) {
+        return false;
+    }
+
+    // Check if halfMoves is within the valid range
+    return halfMovesNumber >= 0 && halfMovesNumber <= 50;
+}
+
+/**
+ * Validates the full-move number in a FEN notation.
+ * 
+ * @param {number} fullMoves - The full-move number to validate.
+ * @returns {boolean} - True if the full-move number is valid, otherwise false.
+ * 
+ * Validations:
+ * - Must be a number.
+ * - Must be non-negative.
+ */
+export function isFullMovesValid(fullMoves) {
+    // Check if fullMoves is a number or a numeric string
+    if (typeof fullMoves !== 'number' && typeof fullMoves !== 'string') {
+        return false;
+    }
+
+    if (typeof fullMoves === 'string' && !fullMoves) return false
+
+    // Check if fullMoves can be converted to a valid number
+    const fullMovesNumber = Number(fullMoves);
+    if (isNaN(fullMovesNumber)) {
+        return false;
+    }
+
+    // Check if fullMoves is a non-negative number
+    return fullMovesNumber >= 0;
+}
+
+/**
  * Converts FEN piece notation to an actual piece.
  * @param {string} letter - The FEN notation of the piece.
  * @returns {string} - The actual piece.
  */
 export function ConvertFENtoPiece(letter) {
+    if (!letter) return GlobalVariables.EMPTY_STRING
+
     const FEN_PIECE_MAP = {
         [GlobalVariables.FEN_PIECES_BLACK.PAWN]: GlobalVariables.PIECES.PAWN,
         [GlobalVariables.FEN_PIECES_BLACK.KNIGHT]: GlobalVariables.PIECES.KNIGHT,
@@ -159,6 +456,8 @@ export function ConvertFENtoPiece(letter) {
  * @returns {string} - The piece in {color-piece} format.
  */
 export function ConvertFENPieceToPiece(value) {
+    if (!value || value.length !== 1) return GlobalVariables.EMPTY_STRING
+
     if (IsUpperCase(value)) {
         return `${GlobalVariables.COLORS.WHITE}${GlobalVariables.PIECE_DELIMITER}${ConvertFENtoPiece(value)}`;
     }
@@ -176,6 +475,8 @@ export function ConvertFENPieceToPiece(value) {
  * @returns {string} - The normal string.
  */
 export function ConvertFenToString(value) {
+    if (!value || (value.length !== 8 && [...value].reduce((length, char) => length + (IsDigit(char) ? parseInt(char, 10) : 1), 0) !== 8)) return GlobalVariables.EMPTY_STRING
+
     return value.split(GlobalVariables.EMPTY_STRING).reduce((result, char) => {
         if (IsDigit(char)) {
             return result + GlobalVariables.EMPTY_SQUARE_PIECE.repeat(Number(char));
@@ -191,6 +492,8 @@ export function ConvertFenToString(value) {
  * @returns {boolean} - True if the squares are on the same row, false otherwise.
  */
 export function checkIfTwoSquaresAreOnTheSameRow(square1, square2) {
+    if (!isSquareValid(square1) || !isSquareValid(square2)) return false
+
     return square1.props.x === square2.props.x;
 }
 
@@ -201,6 +504,8 @@ export function checkIfTwoSquaresAreOnTheSameRow(square1, square2) {
  * @returns {boolean} - True if both squares are on the same column, false otherwise.
  */
 export function checkIfTwoSquaresAreOnTheSameColumn(square1, square2) {
+    if (!isSquareValid(square1) || !isSquareValid(square2)) return false
+
     return square1.props.y === square2.props.y;
 }
 
