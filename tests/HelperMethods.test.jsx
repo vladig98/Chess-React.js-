@@ -1,7 +1,8 @@
 import React from 'react';
-import * as HelperMethods from '../HelperMethods'
-import Square from '../Square'
-import * as GlobalVariables from "../globalVariables.js"
+import * as HelperMethods from '../src/components/HelperMethods.jsx'
+import Square from '../src/components/Square.jsx'
+import * as GlobalVariables from "../src/components/globalVariables.jsx"
+import { describe, test, expect, beforeAll, vi, beforeEach } from 'vitest';
 
 let whitePieces = []
 let blackPieces = []
@@ -37,8 +38,8 @@ const outOfBoundsXOver7 = <Square x={9} y={1} piece={'white-knight'} />
 const outOfBoundsYBelow0 = <Square x={1} y={-1} piece={'white-knight'} />
 const outOfBoundsYOver7 = <Square x={1} y={12} piece={'white-knight'} />
 
-jest.mock('../globalVariables.js', () => {
-    const originalModule = jest.requireActual('../globalVariables.js');
+vi.mock('../globalVariables.js', () => {
+    const originalModule = vi.importActual('../globalVariables.js');
     return {
         ...originalModule,
         CurrentSquareSelection: {
@@ -2319,25 +2320,29 @@ describe('Testing the getATargetSquareByPiece() function', () => {
 
 describe('Testing the isCastlingPossible() function', () => {
     beforeEach(() => {
-        const GlobalVariables = require("../globalVariables.js")
+        Object.defineProperty(GlobalVariables, 'CastlingRights', {
+            get: () => ({
+                whiteShortCastle: true,
+                whiteLongCastle: true,
+                blackShortCastle: true,
+                blackLongCastle: true
+            }),
+            configurable: true,
+        });
 
-        GlobalVariables.CastlingRights = {
-            whiteShortCastle: true,
-            whiteLongCastle: true,
-            blackShortCastle: true,
-            blackLongCastle: true
-        }
-
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
     })
 
     test('check if castling is possible - valid white long castle', () => {
@@ -2369,462 +2374,598 @@ describe('Testing the isCastlingPossible() function', () => {
     });
 
     test('check if castling is possible - invalid white long castle pieces in-between knight', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', 'N', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', 'N', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid white long castle pieces in-between bishop', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', 'B', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', 'B', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid white long castle pieces in-between queen', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', 'Q', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', 'Q', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid white long castle king not on right square', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', 'K', ' ', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', 'K', ' ', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid white long castle rook not on right square', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            [' ', 'R', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                [' ', 'R', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid white long castle in check', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'q', 'k', ' ', 'r'],
-            ['p', 'p', 'p', 'p', ' ', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', ' ', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'q', 'k', ' ', 'r'],
+                ['p', 'p', 'p', 'p', ' ', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', ' ', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid white long castle castle across check', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', 'q', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', ' ', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', ' ', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', 'q', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', ' ', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', ' ', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid white long castle end up in check', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', 'q', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', ' ', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', ' ', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', 'q', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', ' ', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', ' ', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid white long castle castling forbidden (pieces moved)', () => {
-        GlobalVariables.CastlingRights = {
-            whiteShortCastle: true,
-            whiteLongCastle: false,
-            blackShortCastle: true,
-            blackLongCastle: true
-        }
+        Object.defineProperty(GlobalVariables, 'CastlingRights', {
+            get: () => ({
+                whiteShortCastle: true,
+                whiteLongCastle: false,
+                blackShortCastle: true,
+                blackLongCastle: true
+            }),
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid white short castle pieces in-between knight', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', 'N', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', 'N', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('short', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid white short castle pieces in-between bishop', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', 'B', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', 'B', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('short', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid white short castle king not on right square', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', 'K', ' ', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', 'K', ' ', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('short', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid white short castle rook not on right square', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', 'R', ' ']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', 'R', ' ']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('short', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid white short castle in check', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'q', 'k', ' ', 'r'],
-            ['p', 'p', 'p', 'p', ' ', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', ' ', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'q', 'k', ' ', 'r'],
+                ['p', 'p', 'p', 'p', ' ', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', ' ', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('short', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid white short castle castle across check', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', 'q', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', ' ', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', ' ', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', 'q', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', ' ', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', ' ', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('short', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid white short castle end up in check', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', 'q', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', ' ', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', ' ', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', 'q', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', ' ', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', ' ', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('short', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid white short castle castling forbidden (pieces moved)', () => {
-        GlobalVariables.CastlingRights = {
-            whiteShortCastle: false,
-            whiteLongCastle: true,
-            blackShortCastle: true,
-            blackLongCastle: true
-        }
+        Object.defineProperty(GlobalVariables, 'CastlingRights', {
+            get: () => ({
+                whiteShortCastle: false,
+                whiteLongCastle: true,
+                blackShortCastle: true,
+                blackLongCastle: true
+            }),
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('short', true)).toBe(false);
     });
 
     test('check if castling is possible - invalid black long castle pieces in-between knight', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', 'n', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', 'n', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
     });
 
     test('check if castling is possible - invalid black long castle pieces in-between bishop', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', 'b', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', 'b', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
     });
 
     test('check if castling is possible - invalid black long castle pieces in-between queen', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', 'q', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', 'q', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
     });
 
     test('check if castling is possible - invalid black long castle king not on right square', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', 'k', ' ', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', 'k', ' ', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
     });
 
     test('check if castling is possible - invalid black long castle rook not on right square', () => {
-        GlobalVariables.BoardPosition = [
-            [' ', 'r', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                [' ', 'r', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
     });
 
     test('check if castling is possible - invalid black long castle in check', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', ' ', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', ' ', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'Q', 'K', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', ' ', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', ' ', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'Q', 'K', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
     });
 
     test('check if castling is possible - invalid black long castle castle across check', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', ' ', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', ' ', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', 'Q', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', ' ', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', ' ', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', 'Q', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
     });
 
     test('check if castling is possible - invalid black long castle end up in check', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', ' ', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', ' ', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', 'Q', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', ' ', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', ' ', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', 'Q', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
     });
 
     test('check if castling is possible - invalid black long castle castling forbidden (pieces moved)', () => {
-        GlobalVariables.CastlingRights = {
-            whiteShortCastle: true,
-            whiteLongCastle: true,
-            blackShortCastle: true,
-            blackLongCastle: false
-        }
+        Object.defineProperty(GlobalVariables, 'CastlingRights', {
+            get: () => ({
+                whiteShortCastle: true,
+                whiteLongCastle: true,
+                blackShortCastle: true,
+                blackLongCastle: false
+            }),
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('long', false)).toBe(false);
     });
 
     test('check if castling is possible - invalid black short castle pieces in-between knight', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', 'n', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', 'n', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('short', false)).toBe(false);
     });
 
     test('check if castling is possible - invalid black short castle pieces in-between bishop', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', 'b', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', 'b', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('short', false)).toBe(false);
     });
 
     test('check if castling is possible - invalid black short castle king not on right square', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', 'k', ' ', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', 'k', ' ', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('short', false)).toBe(false);
     });
 
     test('check if castling is possible - invalid black short castle rook not on right square', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', 'r', ' '],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', 'r', ' '],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('short', false)).toBe(false);
     });
 
     test('check if castling is possible - invalid black short castle in check', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', ' ', 'p', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', ' ', 'P', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'Q', 'K', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', ' ', 'p', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', ' ', 'P', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'Q', 'K', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('short', false)).toBe(false);
     });
 
     test('check if castling is possible - invalid black short castle castle across check', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', ' ', 'p', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', ' ', 'P', 'P'],
-            ['R', ' ', ' ', ' ', 'K', 'Q', ' ', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', ' ', 'p', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', ' ', 'P', 'P'],
+                ['R', ' ', ' ', ' ', 'K', 'Q', ' ', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('short', false)).toBe(false);
     });
 
     test('check if castling is possible - invalid black short castle end up in check', () => {
-        GlobalVariables.BoardPosition = [
-            ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', ' ', 'p'],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            ['P', 'P', 'P', 'P', 'P', 'P', ' ', 'P'],
-            ['R', ' ', ' ', ' ', 'K', ' ', 'Q', 'R']
-        ]
+        Object.defineProperty(GlobalVariables, 'BoardPosition', {
+            get: () => [
+                ['r', ' ', ' ', ' ', 'k', ' ', ' ', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', ' ', 'p'],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                ['P', 'P', 'P', 'P', 'P', 'P', ' ', 'P'],
+                ['R', ' ', ' ', ' ', 'K', ' ', 'Q', 'R']
+            ],
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('short', false)).toBe(false);
     });
 
     test('check if castling is possible - invalid black short castle castling forbidden (pieces moved)', () => {
-        GlobalVariables.CastlingRights = {
-            whiteShortCastle: true,
-            whiteLongCastle: true,
-            blackShortCastle: false,
-            blackLongCastle: true
-        }
+        Object.defineProperty(GlobalVariables, 'CastlingRights', {
+            get: () => ({
+                whiteShortCastle: true,
+                whiteLongCastle: true,
+                blackShortCastle: false,
+                blackLongCastle: true
+            }),
+            configurable: true,
+        });
+
         expect(HelperMethods.isCastlingPossible('short', false)).toBe(false);
     });
 });
