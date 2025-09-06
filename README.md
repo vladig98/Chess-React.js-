@@ -2,6 +2,11 @@
 
 An **interactive Chess game** built with **React.js**, designed for **two players**. This project leverages **React's state management** to track game progress while providing a **clean and user-friendly interface** using **HTML and CSS**.  
 
+## 🚀 Live Demo
+
+You can check out the live version of this project here:  
+👉 [Live Demo](https://chess-react-js.vercel.app/)
+
 ## 🎯 Features  
 
 - **Two-Player Mode** – Play against a friend in a local match.  
